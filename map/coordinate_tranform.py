@@ -132,6 +132,8 @@ if __name__ == "__main__":
   lanti_map_filename = direct + "lanti_map" + ".csv"
   np.savetxt(lanti_map_filename, ref_point_lanti, fmt='%f', delimiter=',', newline='\n')
 
+
+  print(grid_map_matrix.shape)
   """
   # 简单测试
   """

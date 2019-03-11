@@ -10,10 +10,13 @@ def getRefPointByRelateXY(x, y, longi_map, lanti_map):
   intx = int(x);
   inty = int(y);
   if longi_map[intx, inty] or lanti_map[intx, inty]:
-    return True
+    return (longi_map[intx, inty], lanti_map[intx, inty])
   else:
     return False
 
+"""
+" 从给定的位置读取地图文件，并存在相应的内存中
+"""
 def loadMap(direct):
     grid_file = direct + "grid_map.csv"
     longi_file = direct + "longi_map.csv"
