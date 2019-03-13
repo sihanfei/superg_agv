@@ -25,6 +25,9 @@ class prepareData:
       return False
     return True
 
+"""
+# 选择接续点的工具类
+"""
 class ModifyMap:
   def __init__(self, fig, gps_map, annt_dict, point_dict):
     self.map_tree = spt.KDTree(gps_map)
@@ -87,8 +90,7 @@ class ModifyMap:
 
   def onKeyPress(self, event):
     if event.key == 'v':
-      if self.road_id > 0:
-        print("saving data to file")
+      pass
     return
 
   def callBackConnect(self):
@@ -133,14 +135,102 @@ class ModifyMap:
     plt.plot(road_point[0], road_point[1], 'g.') # overwrite the point
     self.fig.canvas.draw()
 
+"""
+# 建立连通图的工具类
+"""
 class SetConnectMap:
-  def __init__(self, fig, gps_map, point_dict):
+  def __init__(self, fig, gps_map, points_dict):
     self.fig = fig
+    self.id_list = []
+    self.points_list = []
+    self.points_dict = points_dict
+    for _,ID in enumerate(points_dict):
+      self.id_list.append(ID)
+      self.points_list.append(points_dict[ID])
+    # print(self.id_list)
+    # print(self.points_list)
+    self.start_point = ()
+    self.end_point = ()
+    self.road_dict = {}
+    self.ref_line_dict = {}
+    self.road_id_list = [0]
+    return
+
+  def onKeyPress(self, event):
+    if event.values == 's':
+      if len(self.start_point) > 0 and len(self.end_point) > 0:
+        print("seek the ref_line!")
+        self.seekRefLine(self.start_point, self.end_point)
+        self.txt.remove()
+        self.fig.canvas.draw()
+
+
+  def onButtonPress(self, event):
+    if event.button != 1:
+      if len(self.end_point) > 0:
+        plt.plot(self.end_point[0], self.end_point[1], 'ro')
+        self.end_point = ()
+        self.txt.remove()
+        self.fig.canvas.draw()
+      else:
+        if len(self.start_point) > 0:
+          plt.plot(self.start_point[0], self.start_point[1], 'ro')
+          self.start_point = ()
+          self.fig.canvas.draw()
+
+  def onPick(self, event):
+    mouseevent = event.mouseevent
+
+    thisline = event.artist
+    xdata = thisline.get_xdata()
+    ydata = thisline.get_ydata()
+    ind = event.ind
+    points = tuple(zip(xdata[ind], ydata[ind]))
+    point = points[0]
+    if mouseevent.button == 1:
+      print(points[0])
+      if len(self.start_point) == 0:
+        self.start_point = point
+        plt.plot(point[0], point[1], 'bo')
+        self.fig.canvas.draw()
+      else:
+        if len(self.end_point) == 0:
+          self.end_point = point
+          plt.plot(point[0], point[1], 'bo')
+          self.txt = plt.text(self.end_point[0]+25, self.end_point[1], "Press 's' to seek, right click to repick", bbox=dict(facecolor='red', alpha=0.5))
+          self.fig.canvas.draw()
+
+  """
+  # 根据起点和终点，搜寻两点之间的参考点，并保存为参考点集
+  """
+  def seekRefLine(self, start_point, end_point):
+    ref_line = [] # 保存参考点坐标
+    
+    if len(ref_line) > 0: # 参考线存在
+      road_id = self.road_id_list[-1]+1      
+      self.road_id_list.append(road_id)
+      self.road_dict[road_id] = [start_point, end_point]
+      self.ref_line_dict[road_id] = ref_line
+    return len(ref_line)
+
+  def callBackConnect(self):
+    self.fig.canvas.mpl_connect('pick_event', self.onPick)
+    self.fig.canvas.mpl_connect('button_press_event', self.onButtonPress)
+    self.fig.canvas.mpl_connect('key_press_event', self.onKeyPress)
+    return
+
+  def callBackDisconnect(self):
+    self.fig.canvas.mpl_disconnect(self.onPick)
+    self.fig.canvas.mpl_disconnect(self.onButtonPress)
+    self.fig.canvas.mpl_disconnect(self.onKeyPress)
     return
 
 """##############################################
 """
 if __name__ == "__main__":
+  """#################################################################
+  # 准备进行接续点的选择
+  """
   direct = "../data/GPS_info/"
   filename = "map_point_data.csv"
 
@@ -148,9 +238,9 @@ if __name__ == "__main__":
   img1 = PIImg.open(direct+"zhenjiang.bmp")
   npimg1 = np.array(img1)
   npimg1 = npimg1[-1:0:-1,:,:]
-  scale = 8.65
-  bias = [-19, 0]
-  xyz_map = (xyz_map+bias)*scale # 针对镇江地图的偏移
+  scale = 1/0.116
+  bias = [18.75, -0.75]
+  xyz_map = (xyz_map-bias)*scale # 针对镇江地图的偏移
 
   # 读入已经保存的数据地图
   infile = open("point_id_list.csv", 'a+') 
@@ -177,11 +267,13 @@ if __name__ == "__main__":
   annt_dict = {}
   point_dict = {}
   if len(point_list)>0:
+    # 转换点集ID类型
     tmp_point_id_list = []
     for point_id in point_id_list:
       tmp_point_id_list.append(int(point_id))
     point_id_list = tmp_point_id_list
 
+    # 绘制标记点
     ax.plot(point_list[:,0], point_list[:,1], 'r.', picker=5)
     for i in range(len(point_list)):
       annt = ax.annotate("", xy = (0,0), xytext = (-20,20), textcoords = "offset pixels", 
@@ -192,6 +284,7 @@ if __name__ == "__main__":
       annt_dict[point_id_list[i]] = annt
       point_dict[point_id_list[i]] = tuple(point_list[i])
 
+    # 转换点集类型
     tmp_point_list = []
     for point in point_list:
       tmp_point_list.append(tuple(point))
@@ -200,15 +293,15 @@ if __name__ == "__main__":
     point_id_list = []
     point_list = []
 
-  map_modi = ModifyMap(fig, xyz_map, annt_dict, point_dict)
-  map_modi.callBackConnect()
-
+  # 显示并关联到选点程序
   ax.imshow(npimg1, origin = 'lower')
   ax.autoscale(False)
+  map_modi = ModifyMap(fig, xyz_map, annt_dict, point_dict)
+  map_modi.callBackConnect()
   plt.show()
 
+  # 断开连接，保存接续点数据
   map_modi.callBackDisconnect()
-
   if len(map_modi.road_point_id_list)>0:
     output = open('point_id_list.csv', 'w')
     try:
@@ -222,32 +315,46 @@ if __name__ == "__main__":
     finally:
       output.close()
   
-  # 读入已经保存的数据
-  point_id_list = np.loadtxt("point_id_list.csv", delimiter = ',', usecols = [0])
-  point_list = np.loadtxt('point_list.csv', delimiter = ',')  
-  # 改成int类型
-  tmp_point_id_list = []
-  for point_id in point_id_list:
-    tmp_point_id_list.append(int(point_id))
-  point_id_list = tmp_point_id_list
-  # 开始绘图
-  x = point_list[:,0]
-  y = point_list[:,1]
-  fig = plt.figure()
-  ax = fig.add_subplot(111)
-  # annotate
-  for i in range(len(point_list)):
-    annt = ax.annotate("", xy = (0,0), xytext = (-20,20), textcoords = "offset pixels", 
-                        bbox = dict(boxstyle = "round", fc = 'r'), arrowprops = dict(arrowstyle = "-"))
-    annt.set_text(str(point_id_list[i]))
-    annt.xy = point_list[i]
-    annt.set_visible(True)
-  ax.set_title('connecting map')
-  ax.plot(x, y, 'ro', picker = 5)
-  # 叠加图片
-  ax.imshow(npimg1, origin = 'lower')
-  ax.autoscale(False)
-  plt.show()
+  print("{} points".format(len(map_modi.road_point_id_list)))
 
-  # 开始
-  map_tree = spt.KDTree(xyz_map) # kd树
+  """#################################################################
+  # 准备进行连通图设计
+  """
+  if len(map_modi.road_point_id_list)>0:
+    # 读入已经保存的数据
+    point_id_list = np.loadtxt("point_id_list.csv", delimiter = ',', usecols = [0])
+    point_list = np.loadtxt('point_list.csv', delimiter = ',')  
+    # 改成int类型
+    tmp_point_id_list = []
+    for point_id in point_id_list:
+      tmp_point_id_list.append(int(point_id))
+    point_id_list = tmp_point_id_list
+    # 开始绘图
+    x = point_list[:,0]
+    y = point_list[:,1]
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    # annotate
+    for i in range(len(point_list)):
+      annt = ax.annotate("", xy = (0,0), xytext = (-20,20), textcoords = "offset pixels", 
+                          bbox = dict(boxstyle = "round", fc = 'r'), arrowprops = dict(arrowstyle = "-"))
+      annt.set_text(str(point_id_list[i]))
+      annt.xy = point_list[i]
+      annt.set_visible(True)
+    ax.set_title('connecting map')
+    ax.plot(x, y, 'ro', picker = 10)
+    # 叠加图片
+    ax.imshow(npimg1, origin = 'lower')
+    ax.autoscale(False)
+
+    # 进入连接图处理
+    set_connect_map = SetConnectMap(fig, xyz_map, point_dict)
+    set_connect_map.callBackConnect()
+    plt.show()
+
+    set_connect_map.callBackDisconnect()
+
+    # 
+
+  ################  for debug
+    map_tree = spt.KDTree(xyz_map) # kd树
