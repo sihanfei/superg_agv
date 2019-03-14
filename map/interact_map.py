@@ -4,7 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.spatial as spt
 import matplotlib.image as mpimg
-import numpy as np
 import PIL.Image as PIImg
 
 class prepareData:
@@ -157,7 +156,7 @@ class SetConnectMap:
     return
 
   def onKeyPress(self, event):
-    if event.values == 's':
+    if event.key == 'k':
       if len(self.start_point) > 0 and len(self.end_point) > 0:
         print("seek the ref_line!")
         self.seekRefLine(self.start_point, self.end_point)
@@ -180,7 +179,6 @@ class SetConnectMap:
 
   def onPick(self, event):
     mouseevent = event.mouseevent
-
     thisline = event.artist
     xdata = thisline.get_xdata()
     ydata = thisline.get_ydata()
@@ -197,7 +195,7 @@ class SetConnectMap:
         if len(self.end_point) == 0:
           self.end_point = point
           plt.plot(point[0], point[1], 'bo')
-          self.txt = plt.text(self.end_point[0]+25, self.end_point[1], "Press 's' to seek, right click to repick", bbox=dict(facecolor='red', alpha=0.5))
+          self.txt = plt.text(self.end_point[0]+25, self.end_point[1], "Press 'k' to seek, right click to repick", bbox=dict(facecolor='red', alpha=0.5))
           self.fig.canvas.draw()
 
   """

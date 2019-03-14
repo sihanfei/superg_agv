@@ -85,9 +85,9 @@ if __name__ == "__main__":
   grid_map = np.savetxt(grid_map_filename, grid_map_matrix, fmt='%d', delimiter=',', newline='\n')
   
   longi_map_filename = direct + "longi_map" + ".csv"
-  np.savetxt(longi_map_filename, ref_point_longi, fmt='%f', delimiter=',', newline='\n')
+  np.savetxt(longi_map_filename, ref_point_longi, fmt='%.3f', delimiter=',', newline='\n')
 
   lanti_map_filename = direct + "lanti_map" + ".csv"
-  np.savetxt(lanti_map_filename, ref_point_lanti, fmt='%f', delimiter=',', newline='\n')
+  np.savetxt(lanti_map_filename, ref_point_lanti, fmt='%.3f', delimiter=',', newline='\n')
 
   print(grid_map_matrix.shape)

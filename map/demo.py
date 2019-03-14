@@ -1,14 +1,20 @@
 import numpy as np
 
-if __name__ == "__main__":
-  file_dir = "../data/GPS_info/"
-  filename = file_dir + "map_point_data.csv"
-  point_data = np.loadtxt(filename, delimiter=',')
-  longi = point_data[:,0]
-  lanti = point_data[:,1]
-  longi_uni, index = np.unique(longi, return_index=True)
-  lanti_uni = lanti[index]
-  unique_data = tuple(zip(longi_uni, lanti_uni))
-  print("longi={}, lanti={}".format(len(point_data), len(unique_data)))
-  filename = file_dir + "rmdup_map_point_data.csv"
-  np.savetxt(filename, unique_data, fmt='%f', delimiter=',', newline='\n')
+dt = np.dtype([
+  ('name', np.unicode_, 16), 
+  ('grades', np.float64, (2,))
+  ])
+x = np.array([('Sarah', (8.0, 7.0))], dtype=dt)
+print(x)
+
+demo_type = np.dtype([
+  ('point', np.float16, (2,)),
+  ('width', np.float16, (2,))
+  ])
+print(demo_type['point'])
+demo_list = []
+demo_data = np.array(
+  [((1.0, 2.0),
+    (1.5, 1.5))], dtype = demo_type)
+demo_list.append(demo_data)
+print(demo_list)
