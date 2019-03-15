@@ -134,36 +134,69 @@ class ModifyMap:
     plt.plot(road_point[0], road_point[1], 'g.') # overwrite the point
     self.fig.canvas.draw()
 
-"""
+"""=======================================================================================
 # 建立连通图的工具类
 """
 class SetConnectMap:
   def __init__(self, fig, gps_map, points_dict):
+    self.tree = spt.KDTree(gps_map)
     self.fig = fig
+    self.total_points = gps_map
+    # 接续点数据
     self.id_list = []
     self.points_list = []
     self.points_dict = points_dict
     for _,ID in enumerate(points_dict):
       self.id_list.append(ID)
       self.points_list.append(points_dict[ID])
-    # print(self.id_list)
-    # print(self.points_list)
+    # 连通图
     self.start_point = ()
     self.end_point = ()
-    self.road_dict = {}
-    self.ref_line_dict = {}
-    self.road_id_list = [0]
+    self.ref_line_id_list = ()
+    self.ref_line = ()
+    self.ref_line_list = ()
+    self.connnect_map = {}
+    self.schedule = 0
+    self.line_start = ()
     return
 
   def onKeyPress(self, event):
-    if event.key == 'k':
+    key = event.key
+    if key == 't':
       if len(self.start_point) > 0 and len(self.end_point) > 0:
-        print("seek the ref_line!")
-        self.seekRefLine(self.start_point, self.end_point)
+        print("ge't' the ref_line!")
+        self.schedule = 1
         self.txt.remove()
         self.fig.canvas.draw()
+        self.line_start_point = self.start_point
+    elif key == 'c' and len(self.end_point) > 0:
+      self.schedule == 2
+      print('direct connecting')
+      # 开始保存连通图
+      # 起点ID是否已经存在
+      ind = self.points_list.index(self.start_point)
+      start_point_ID = self.id_list[ind]
+      if start_point_ID in self.connnect_map:
+        value = self.connnect_map[start_point_ID]
+      else:
+        value = []
+      # 连通图连通关系数据 (end_point_id, ref_line_id)
+      ind = self.points_list.index(self.end_point)
+      end_point_ID = self.id_list[ind]
+      if len(self.ref_line_id_list) == 0:
+        ref_line_ID = 1
+      else:
+        ref_line_ID = self.ref_line_id_list[-1] + 1
+      # 
+      self.ref_line_id_list.append(ref_line_ID)
+      # self.ref_line_list.append(ref_line)
+      # value.append((end_point_ID, ref_line_ID))
+      # self.connect_map[start_point_ID] = value           
+      self.schedule = 0
+      
 
-
+  """
+  """
   def onButtonPress(self, event):
     if event.button != 1:
       if len(self.end_point) > 0:
@@ -176,7 +209,22 @@ class SetConnectMap:
           plt.plot(self.start_point[0], self.start_point[1], 'ro')
           self.start_point = ()
           self.fig.canvas.draw()
+    else:
+      if self.schedule == 1: # 通过人工选点来获取参考点
+        point = (event.xdata, event.ydata)
+        distance, ind = self.tree.query(point) # kd树查找
+        start_point = self.start_point
+        end_point = self.tree.data[ind]
+        plt.plot(end_point[0], end_point[1], 'bo')
+        self.fig.canvas.draw()
+        self.seekRefLine(start_point, end_point)
+      elif self.schedule == 2:
 
+        print('direct connecting')
+
+
+  """
+  """
   def onPick(self, event):
     mouseevent = event.mouseevent
     thisline = event.artist
@@ -195,21 +243,59 @@ class SetConnectMap:
         if len(self.end_point) == 0:
           self.end_point = point
           plt.plot(point[0], point[1], 'bo')
-          self.txt = plt.text(self.end_point[0]+25, self.end_point[1], "Press 'k' to seek, right click to repick", bbox=dict(facecolor='red', alpha=0.5))
+          self.txt = plt.text(self.end_point[0]+25, self.end_point[1], 
+            "'t' to get, right to repick", bbox=dict(facecolor='white', alpha=0.5))
           self.fig.canvas.draw()
 
   """
   # 根据起点和终点，搜寻两点之间的参考点，并保存为参考点集
   """
   def seekRefLine(self, start_point, end_point):
+    orig_ind = np.where(self.total_points==end_point)
+    print(orig_ind)
+    end_point_ind = tuple(zip(orig_ind))
+    print(end_point_ind)
+    print('the points is {}'.format(self.total_points[end_point_ind]))
+
+    orig_ind = np.where(self.total_points==start_point)
+    start_point_ind = tuple(zip(orig_ind))
+
     ref_line = [] # 保存参考点坐标
-    
-    if len(ref_line) > 0: # 参考线存在
-      road_id = self.road_id_list[-1]+1      
-      self.road_id_list.append(road_id)
-      self.road_dict[road_id] = [start_point, end_point]
-      self.ref_line_dict[road_id] = ref_line
+
+    # 从endpoint_ind 尝试性的向两侧搜索,看与start_point的距离变换,
+    # 找到变小方向后,持续加入点,直到新加入的点距离发生突变
+    current_distance = self.calcDistance(end_point, start_point)
+    if end_point_ind >= 1:
+      next_point = self.total_points[end_point_ind-1]
+      next_distance = self.calcDistance(next_point, start_point)
+      if next_distance < current_distance:
+        direct = -1
+      else:
+        direct = 1
+    else:
+      if end_point_ind < (len(self.total_points) - 1):
+        next_point = self.total_points[end_point_ind+1]
+        next_distance = self.calcDistance(next_point, start_point)
+        if next_distance < current_distance:
+          direct = 1
+        else:
+          direct = -1
+
+    current_distance = next_distance
+    while next_distance <= current_distance and next_point_ind >= 1 and next_point_ind < (len(self.total_points)-1):
+      next_point_ind = end_point_ind + direct
+      next_point = self.total_points[next_point_ind]
+      next_distance = self.calcDistance(next_point, start_point)
+      ref_line.append(next_point)
+      plt.plot(next_point[0], next_point[1], 'bo')
+      self.fig.canvas.draw()
+
+      
+    # self.ref_line.append(ref_line)
     return len(ref_line)
+
+  def calcDistance(self, p1, p2):
+    return np.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
 
   def callBackConnect(self):
     self.fig.canvas.mpl_connect('pick_event', self.onPick)
@@ -233,6 +319,7 @@ if __name__ == "__main__":
   filename = "map_point_data.csv"
 
   xyz_map = np.loadtxt(direct+filename, delimiter=',')
+  xyz_map = np.unique(xyz_map, axis=0) # 去重
   img1 = PIImg.open(direct+"zhenjiang.bmp")
   npimg1 = np.array(img1)
   npimg1 = npimg1[-1:0:-1,:,:]
