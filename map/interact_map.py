@@ -141,7 +141,7 @@ class SetConnectMap:
   def __init__(self, fig, gps_map, points_dict):
     self.tree = spt.KDTree(gps_map)
     self.fig = fig
-    self.total_points = gps_map
+    self.total_points = gps_map.tolist()
     # 接续点数据
     self.id_list = []
     self.points_list = []
@@ -251,21 +251,18 @@ class SetConnectMap:
   # 根据起点和终点，搜寻两点之间的参考点，并保存为参考点集
   """
   def seekRefLine(self, start_point, end_point):
-    orig_ind = np.where(self.total_points==end_point)
-    print(orig_ind)
-    end_point_ind = tuple(zip(orig_ind))
-    print(end_point_ind)
-    print('the points is {}'.format(self.total_points[end_point_ind]))
+    start_point_ind = self.total_points.index(start_point)
+    print(start_point_ind)
+    print('the points is {}'.format(self.total_points[start_point_ind]))
 
-    orig_ind = np.where(self.total_points==start_point)
-    start_point_ind = tuple(zip(orig_ind))
+    end_point_ind = self.total_points.index(end_point)
 
     ref_line = [] # 保存参考点坐标
 
-    # 从endpoint_ind 尝试性的向两侧搜索,看与start_point的距离变换,
+    # 从start_point_ind 尝试性的向两侧搜索,看与end_point的距离变换,
     # 找到变小方向后,持续加入点,直到新加入的点距离发生突变
     current_distance = self.calcDistance(end_point, start_point)
-    if end_point_ind >= 1:
+    if start_point_ind >= 1:
       next_point = self.total_points[end_point_ind-1]
       next_distance = self.calcDistance(next_point, start_point)
       if next_distance < current_distance:
