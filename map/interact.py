@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import PIL.Image as PIImg
 import scipy.spatial as spt
-
-
 """
 # 选择接续点的工具类
 """
+
+
 class ModifyMap:
     def __init__(self, fig, gps_map):
         self.fig = fig
@@ -27,25 +27,20 @@ class ModifyMap:
             xytext=(-20, 20),
             textcoords="offset pixels",
             bbox=dict(boxstyle="round", fc='r'),
-            arrowprops=dict(arrowstyle="-"))        
+            arrowprops=dict(arrowstyle="-"))
         self.ax.set_title("now type is line")
         self.get_ref_line_flag = False
         self.annt_dict = {}
         self.line_type = 'line'
         # ref_line
         self.start_point = ()
-        self.draw_start = ()
         self.start_point_ID = []
         self.draw_point_list = []
-        self.mid_point = ()
-        self.mid_point_ID = []
-        self.end_point = ()
-        self.end_point_ID = []
         self.ref_line = []
-        self.ref_line_part = []
         self.ref_line_id_list = []
         self.ref_line_list = []
         self.ref_line_dict = {}
+        self.cnt_number = 0
 
     def onPick(self, event):
         mousevent = event.mouseevent
@@ -62,51 +57,65 @@ class ModifyMap:
             self.annt.xy = point
             self.annt.set_visible(True)
             self.draw_point_list.append(point)
+            if len(self.draw_point_list) == 1:
+                self.annt.set_text('Start')
+            elif len(self.draw_point_list) >= 2:
+                self.annt.set_text('End')
             if self.line_type == 'line':
-                if len(self.draw_point_list) == 1:
-                    self.annt.set_text('Start')
-                elif len(self.draw_point_list) >= 2:
-                    self.annt.set_text('End')
-                    self.ref_line_part = self.getRefLine(self.draw_point_list[-2], self.draw_point_list[-1], 'line')
+                self.cnt_number = self.cnt_number + 1
+                if self.cnt_number >= 2:
+                    self.ref_line_part = self.getRefLine(
+                        (self.draw_point_list[-2], self.draw_point_list[-1]),
+                        'line')
                     self.drawPoints(self.ref_line_part, 'r.')
                     self.ref_line = self.ref_line + self.ref_line_part
                     print(self.ref_line)
                 pass
             elif self.line_type == 'circle':
-                pass
+                self.cnt_number = self.cnt_number + 1
+                if len(self.cnt_number) >= 3:
+                    self.ref_line_part = self.getRefLine(
+                        (self.draw_point_list[-3], self.draw_point_list[-2],
+                         self.draw_point_list[-1]), 'circle')
+                    pass
             else:
                 pass
         else:
             print('repick')
+            self.cnt_number = self.cnt_number - 1
             if len(self.draw_point_list) >= 2:
                 print(self.draw_point_list[-1])
-                index_s = self.ref_line.index(self.draw_point_list[-1])
-                index_e = self.ref_line.index(self.draw_point_list[-2])
-                draw_list = self.draw_point_list[index_s:index_e:-1]
-                self.drawPoints(draw_list, 'b.')
+                index_s = self.ref_line.index(tuple(self.draw_point_list[-1]))
+                index_e = self.ref_line.index(tuple(self.draw_point_list[-2]))
+                draw_list = self.ref_line[index_s:index_e:-1]
+                self.drawPoints(draw_list, 'g.')
                 self.draw_point_list.pop()
                 self.annt.xy = self.draw_point_list[-1]
                 if len(self.draw_point_list) == 1:
                     self.annt.set_text('Start')
             elif len(self.draw_point_list) == 1:
+                plt.plot(self.draw_point_list[-1][0],
+                         self.draw_point_list[-1][1], 'g.')
                 self.draw_point_list.pop()
                 self.annt.set_visible(False)
             pass
         self.fig.canvas.draw()
         return
 
-    def getRefLine(self, ps, pe, method):
+    def getRefLine(self, points, method):
         ref_line = []
         if method == 'line':
             print('draw a line')
+            pe = points[1]
+            ps = points[0]
             diff = np.array(pe) - np.array(ps)
             distance = np.sqrt((diff[0])**2 + (diff[1])**2)
-            number = int(distance/1) # 按照1m间隔采样点
+            number = int(distance / 1)  # 按照1m间隔采样点
             for i in range(number):
-                point = ps + diff/number*i
-                ref_line.append(point)
+                point = ps + diff / number * i
+                ref_line.append(tuple([point[0], point[1]]))
                 # plt.plot(point[0], point[1], 'r.')
-            ref_line.append(pe)
+            ref_line.append(tuple([pe[0], pe[1]]))
             pass
         elif method == 'circle':
             pass
@@ -125,11 +134,25 @@ class ModifyMap:
         return
 
     def onKeyPress(self, event):
-
+        if event.key == 'i':
+            if self.line_type != 'line':
+                self.cnt_number = 0
+                self.line_type = 'line'
+                self.ax.set_title('now in line mode')
+            else:
+                pass
+        if event.key == 'c':
+            if self.line_type != 'circle':
+                self.cnt_number = 0
+                self.line_type = 'circle'
+                self.ax.set_title('now in circle mode')
+            else:
+                pass
+        self.fig.canvas.draw()
         return
 
     def calcCircle(self, point1, point2):
-        
+
         return
 
     def saveRefLine(self, ref_line):
