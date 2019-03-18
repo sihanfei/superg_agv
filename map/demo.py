@@ -175,14 +175,8 @@
 
 from scipy import spatial
 import numpy as np
+import matplotlib.pyplot as plt
 
-x, y = np.mgrid[0:5, 2:8]
-tree = spatial.KDTree(list(zip(x.ravel(), y.ravel())))
-
-pts = np.array([[0, 0], [2.1, 2.9]])
-_, ind = tree.query(pts[0])
-pt = tree.data[ind]
-
-print(pt)
-ind = (np.where(tree.data == pt))
-print(tuple(zip(ind)))
+a=np.array([2.0, 1.0])
+b=np.array([4.0, 2.0])
+print((a+b)/2)
