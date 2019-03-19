@@ -56,12 +56,14 @@ class ModifyMap:
             plt.plot(point[0], point[1], 'r.')
             self.annt.xy = point
             self.annt.set_visible(True)
-            self.draw_point_list.append(point)
-            if len(self.draw_point_list) == 1:
+            self.draw_point_list.append(point) # add pick point to draw_list
+
+            if len(self.draw_point_list) == 1: # show the pick point
                 self.annt.set_text('Start')
             elif len(self.draw_point_list) >= 2:
                 self.annt.set_text('End')
-            if self.line_type == 'line':
+
+            if self.line_type == 'line': # draw line
                 self.cnt_number = self.cnt_number + 1
                 if self.cnt_number >= 2:
                     self.ref_line_part = self.getRefLine(
@@ -70,14 +72,15 @@ class ModifyMap:
                     self.drawPoints(self.ref_line_part, 'r.')
                     self.ref_line = self.ref_line + self.ref_line_part
                     print(self.ref_line)
-                pass
             elif self.line_type == 'circle':
                 self.cnt_number = self.cnt_number + 1
-                if len(self.cnt_number) >= 3:
+                if self.cnt_number >= 3:
                     self.ref_line_part = self.getRefLine(
                         (self.draw_point_list[-3], self.draw_point_list[-2],
                          self.draw_point_list[-1]), 'circle')
-                    pass
+                    self.drawPoints(self.ref_line_part, 'r.')
+                    self.ref_line = self.ref_line + self.ref_line_part
+                    print(self.ref_line)
             else:
                 pass
         else:
@@ -118,6 +121,10 @@ class ModifyMap:
             ref_line.append(tuple([pe[0], pe[1]]))
             pass
         elif method == 'circle':
+            p0 = points[0]
+            p1 = points[1]
+            p2 = points[2]
+            print('draw a arc')
             pass
         else:
             pass
@@ -136,14 +143,20 @@ class ModifyMap:
     def onKeyPress(self, event):
         if event.key == 'i':
             if self.line_type != 'line':
-                self.cnt_number = 0
+                if len(self.draw_point_list) > 0:
+                    self.cnt_number = 1
+                else:
+                    self.cnt_number = 0
                 self.line_type = 'line'
                 self.ax.set_title('now in line mode')
             else:
                 pass
         if event.key == 'c':
             if self.line_type != 'circle':
-                self.cnt_number = 0
+                if len(self.draw_point_list) > 0:
+                    self.cnt_number = 1
+                else:
+                    self.cnt_number = 0
                 self.line_type = 'circle'
                 self.ax.set_title('now in circle mode')
             else:

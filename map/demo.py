@@ -173,10 +173,18 @@
 
 # plt.show()
 
-from scipy import spatial
-import numpy as np
-import matplotlib.pyplot as plt
+# from scipy import spatial
+# import numpy as np
+# import matplotlib.pyplot as plt
 
-a=np.array([2.0, 1.0])
-b=np.array([4.0, 2.0])
-print((a+b)/2)
+# a=np.array([2.0, 1.0])
+# b=np.array([4.0, 2.0])
+# print((a+b)/2)
+from matplotlib.lines import Line2D
+custom_lines = [Line2D([0], [0], color=cmap(0.), lw=4),
+                Line2D([0], [0], color=cmap(.5), lw=4),
+                Line2D([0], [0], color=cmap(1.), lw=4)]
+
+fig, ax = plt.subplots()
+lines = ax.plot(data)
+ax.legend(custom_lines, ['Cold', 'Medium', 'Hot'])

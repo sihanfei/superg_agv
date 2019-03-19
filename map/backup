@@ -722,3 +722,179 @@ if __name__ == "__main__":
   
   print("{} points".format(len(map_modi.road_point_id_list)))
 
+=====================================================================================================
+# # -*- coding:utf-8 -*-
+
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+import PIL.Image as PIImg
+import scipy.spatial as spt
+import dxfgrabber as grb
+
+"""
+# 选择接续点的工具类
+"""
+
+
+class ModifyMap:
+  def __init__(self, fig):
+    self.fig = fig
+    self.ref_line = []
+    
+
+  def onPick(self, event):
+    mousevent = event.mouseevent
+    artist = event.artist
+    if mousevent.button == 1:
+      artist.set_color('k')
+      data = artist.get_data()
+      self.fig.canvas.draw()
+      print('data of artist is {}'.format(data))
+    else:
+      pass
+
+
+
+  def onButtonPress(self, event):
+    print('button')
+
+  def onKeyPress(self, event):
+    print('key')
+
+  def callBackConnect(self):
+    self.fig.canvas.mpl_connect('pick_event', self.onPick)
+    self.fig.canvas.mpl_connect('button_press_event', self.onButtonPress)
+    self.fig.canvas.mpl_connect('key_release_event', self.onKeyPress)
+
+  def callBackDisconnect(self):
+    self.fig.canvas.mpl_disconnect(self.onPick)
+    self.fig.canvas.mpl_disconnect(self.onButtonPress)
+    self.fig.canvas.mpl_disconnect(self.onKeyPress)
+
+class RefPointPara:
+  def __init__(self):
+    self.point = []
+    self.width = []
+    self.cuv = 0
+    self.gcuv = 0
+    self.s = 0
+  
+  def setWidth(self, width):
+    self.width = width
+  
+  def setCuv(self, cuv):
+    self.cuv = cuv
+  
+  def setGcuv(self, gcuv):
+    self.gcuv = gcuv
+  
+  def setS(self, s):
+    self.s = s
+  
+  def setPoint(self, point):
+    self.point = point
+
+"""##############################################
+"""
+if __name__ == "__main__":
+  img1 = PIImg.open("zhenjiang.bmp")
+  npimg1 = np.array(img1)
+  npimg1 = npimg1[-1:0:-1, :, :]
+  scale = 1 / 0.116
+  bias = [18.75, -0.75]
+  # xyz_map = (xyz_map - bias) * scale  # 针对镇江地图的偏移
+
+  # 准备绘图
+  fig = plt.figure()
+  ax = fig.add_subplot(111)
+  ax.set_title('modify map')
+
+  # 读取dxf文件
+  dxf_object = grb.readfile('map7.dxf')
+  
+  ref_seg_points = []
+  total_ref_seg_list = []
+  total_ref_seg_id_list = []
+
+  ref_seg_id = 0
+  ref_seg_line = []
+  ref_seg_dict = {}
+
+  for entity in dxf_object.entities:
+    if entity.layer == 'ref_line':
+      ref_seg_id = ref_seg_id + 1
+      ref_point = RefPointPara()
+      if entity.dxftype == 'LINE': # 对点进行离散化
+        start_point = (np.array([entity.start[0], entity.start[1]])/1000 - bias) * scale # dxf中为mm,且有偏移
+        end_point = (np.array([entity.end[0], entity.end[1]])/1000 - bias) * scale
+        # 离散化
+        distance = np.sqrt((end_point[0] - start_point[0]) ** 2 
+                          + (end_point[1] - start_point[1]) ** 2)
+        delta_x = (end_point[0] - start_point[0]) / distance
+        delta_y = (end_point[1] - start_point[1]) / distance
+        if delta_x==0 and delta_y == 0:
+          x = start_point[0]
+          y = start_point[1]
+        elif delta_x != 0 and delta_y == 0:
+          x = np.arange(start_point[0], end_point[0]+delta_x, delta_x)
+          y = np.ones(x.shape)*start_point[1]
+        elif delta_x == 0 and delta_y != 0:
+          y = np.arange(start_point[1], end_point[1]+delta_y, delta_y)
+          x = np.ones(y.shape)*start_point[0]
+        else:
+          x = np.arange(start_point[0], end_point[0], delta_x)
+          y = np.arange(start_point[1], end_point[1], delta_y)
+          list(x).append(end_point[0])
+          list(y).append(end_point[1])
+          # if x.shape != y.shape:
+          #   print('xy error!')
+        ax.plot(x, y, picker = 5)
+        # 计算参考线上点的数据
+        distance_s = 0
+        for i in range(len(x)):
+          ref_point.setPoint(tuple([x[i], y[i]]))
+          ref_point.setCuv(0)
+          ref_point.setGcuv(0)
+          ref_point.setWidth(tuple([-2, 2]))
+          distance_s = np.sqrt((x[i] - x[0]) ** 2 + (y[i] - y[0]) ** 2)
+          ref_seg_line.append(ref_point)
+          ref_seg_points.append(ref_point.point)
+        ref_seg_dict[ref_seg_id] = ref_seg_line
+        ref_seg_line.clear()
+      if entity.dxftype == 'ARC':
+        center_point = entity.center
+        radius = entity.radius
+        start_angle = entity.start_angle
+        end_angle = entity.end_angle
+        if end_angle == 0:
+          end_angle = 360
+        print('start = {}, end = {}'.format(start_angle, end_angle))
+        delta_angle = (end_angle - start_angle)/360 # 按照1度为基准转换
+        angle_array = np.arange(start_angle, end_angle+delta_angle, delta_angle)*3.1415926/180
+        x = ((np.cos(angle_array)*radius + center_point[0])/1000 - bias[0]) * scale
+        y = ((np.sin(angle_array)*radius + center_point[1])/1000 - bias[1]) * scale
+        ax.plot(x, y, picker = 5)
+        for i in range(len(x)):
+          distance_s = np.sqrt((x[i] - x[0]) ** 2 + (y[i] - y[0]) ** 2)
+          ref_point.setPoint(tuple([x[i], y[i]]))
+          ref_point.setCuv(1/radius)
+          ref_point.setGcuv(ref_point.cuv / distance_s)
+          ref_point.setWidth(tuple([-2, 2]))
+          ref_seg_line.append(ref_point)
+          ref_seg_points.append(ref_point.point)
+        ref_seg_dict[ref_seg_id] = ref_seg_line
+        ref_seg_line.clear
+      
+      total_ref_seg_id_list.append(ref_seg_id)
+      total_ref_seg_list.append(ref_seg_points)
+      ref_seg_points.clear
+      print('id = {}, dict len = {}, seg number ={}'.format(ref_seg_id, len(ref_seg_dict), len(total_ref_seg_list)))
+
+  # 显示并关联到选点程序
+  ax.imshow(npimg1, origin='lower')
+  ax.autoscale(False)
+  map_modi = ModifyMap(fig)
+  map_modi.callBackConnect()
+  plt.show()
+
