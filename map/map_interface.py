@@ -2,6 +2,10 @@
 
 import numpy as np
 
+def getPointIDByPoint():
+  pass
+
+
 """
 " 给出x，y（基于原点的坐标，以米为单位），和map
 " 判断是否在map允许范围内：x、y取整后，map对应的位置为1,表示可选，并返回map所在位置的数据 or false
