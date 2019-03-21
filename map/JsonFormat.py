@@ -111,6 +111,9 @@ class ConnectMap:
         self.ref_line_length = ref_line_length
         self.speed_limited = speed_limited
 
+    def setSpeedLimited(self, speed_limited):
+        self.speed_limited = speed_limited
+
 
 class ConnectMapKey:
     def __init__(self, start_point=[]):
@@ -179,6 +182,11 @@ def readRefPointParaDictFromJson(filename):
 def readConnectMapFromJson(filename):
     pass
     return readFromJson(filename, ConnectMapEncoder)
+
+
+def readLineMapFromJson(filename):
+    pass
+    return readFromJson(filename, LineEntityEncoder)
 
 
 if __name__ == "__main__":

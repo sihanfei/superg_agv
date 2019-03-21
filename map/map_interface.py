@@ -1,42 +1,69 @@
-# -*- coding:utf-8 -*-
+# coding = utf-8
 
 import numpy as np
+import JsonFormat as jft
+import matplotlib.pyplot as plt
 
-def getPointIDByPoint():
-  pass
 
+class CalcRefLine:
+    def __init__(self):
+        pass
 
-"""
-" 给出x，y（基于原点的坐标，以米为单位），和map
-" 判断是否在map允许范围内：x、y取整后，map对应的位置为1,表示可选，并返回map所在位置的数据 or false
-"""
-def getRefPointByRelateXY(x, y, longi_map, lanti_map):
-  intx = int(x);
-  inty = int(y);
-  if longi_map[intx, inty] or lanti_map[intx, inty]:
-    return (longi_map[intx, inty], lanti_map[intx, inty])
-  else:
-    return False
+    def makeConnectMap(self, entities_dict,
+                       threshold):  # currentEntityID : (nextID0, ..., nextIDn)
+        # 取任意终点,计算其他起点与它之间的距离,
+        # 如果小于阈值,则认为是同一点,
+        # 把该点对应的id作为键,把其他id作为值,保存到connect_map_dict中
+        connect_map_dict = {}
+        end_points = []
+        start_points = []
+        key_list = []
+        # 获取点与键
+        for _, key in enumerate(entities_dict):
+            key_list.append(key)
+            end_points.append(entities_dict[key].end)
+            start_points.append(entities_dict[key].start)
+        # 计算并比较距离
+        for i in range(len(end_points)):
+            connect_value_list = []
+            for j in range(len(start_points)):
+                distance = self.calcPointsDistance(end_points[i],
+                                                   start_points[j])
+                if distance < threshold:
+                    connect_value_list.append(j)
+            connect_map_dict[key_list[i]] = connect_value_list
+            print("makConnectMap: connect_dict={}:{}".format(
+                key_list[i], connect_value_list))
+        return connect_map_dict
 
-"""
-" 从给定的位置读取地图文件，并存在相应的内存中
-"""
-def loadMap(direct):
-    grid_file = direct + "grid_map.csv"
-    longi_file = direct + "longi_map.csv"
-    lanti_file = direct + "lanti_map.csv" 
-    try:
-      grid_map = np.loadtxt(grid_file, delimiter=',')
-      longi_map = np.loadtxt(longi_file, delimiter=',')
-      lanti_map = np.loadtxt(lanti_file, delimiter=',')
-    except IOError:
-      print("file open failed")
-      return False    
-    return (grid_map, longi_map, lanti_map)
+    def calcPointsDistance(self, p0, p1):
+        distance = np.sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)
+        return distance
+
+    def getRefLine(self, entity):
+        pass
+        ref_line = []
+        ps = entity.start
+        pe = entity.end
+
+        return ref_line
+
 
 if __name__ == "__main__":
-    direct = "../data/GPS_info/"
+    line_map_obj = jft.readLineMapFromJson('Line_Map.json')
+    entities_dict = {}
+    # read data
+    for _, key in enumerate(line_map_obj):
+        if key == 0:
+            print("main: {}:{}".format(key, line_map_obj[key][0]))
+        entity = jft.LineEntity(line_map_obj[key][0], line_map_obj[key][1],
+                                line_map_obj[key][2], line_map_obj[key][3],
+                                line_map_obj[key][4], line_map_obj[key][5])
+        entities_dict[key] = entity
+    # calc
+    calc_ref_line = CalcRefLine()
+    connect_map_dict = calc_ref_line.makeConnectMap(entities_dict, 2)
 
-    (grid_map, longi_map, lanti_map) = loadMap(direct)
-    
-    print(getRefPointByRelateXY(23.3, 10.5, longi_map, lanti_map))
+    for _, key in entities_dict:
+        entity = entities_dict[key]
+        ref_line = calc_ref_line.getRefLine(entity)

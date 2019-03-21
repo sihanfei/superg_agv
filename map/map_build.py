@@ -163,7 +163,7 @@ if __name__ == "__main__":
     ax.set_title("'v' save json")
 
     # 读取dxf文件
-    dxf_object = grb.readfile('map7.dxf')
+    dxf_object = grb.readfile('zhenjiang.dxf')
 
     total_ref_seg_id_list = []
     total_ref_seg_entity = []
@@ -185,7 +185,7 @@ if __name__ == "__main__":
                 # # print('x={}'.format(x))
                 # 利用line的url属性传递entity的id信息
                 aline = ln.Line2D(
-                    x, y, url=str(ref_seg_id), picker=3, color='b')
+                    x, y, url=str(ref_seg_id), picker=5, color='b')
                 ax.add_line(aline)
             if entity.dxftype == 'ARC':
                 entity.center = (
