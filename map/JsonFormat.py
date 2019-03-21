@@ -5,6 +5,22 @@ import json
 import numpy as np
 
 
+class LineEntity:
+    def __init__(self,
+                 linetype='LINE',
+                 start=[],
+                 end=[],
+                 angle=[],
+                 center=[],
+                 radius=0):
+        self.linetype = linetype
+        self.start = list(start)
+        self.end = list(end)
+        self.angle = list(angle)
+        self.center = list(center)
+        self.radius = radius
+
+
 class RefPointPara:
     """
   参考点属性结构体
@@ -65,6 +81,14 @@ class RefPointPara:
         return self.gcuv
 
 
+class LineEntityEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, LineEntity):
+            return (obj.linetype, obj.start, obj.end, obj.angle, obj.center,
+                    obj.radius)
+        return json.JSONEncoder.default(self, obj)
+
+
 class RefPointParaEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, RefPointPara):
@@ -122,6 +146,11 @@ def saveConnectMapToJson(file, wt, dicts):
     saveJsonFile(file, wt, dicts, ConnectMapEncoder)
 
 
+def saveLineMapToJson(file, wt, dicts):
+    pass
+    saveJsonFile(file, wt, dicts, LineEntityEncoder)
+
+
 def saveRefPointParaDictToJson(file, wt, dicts):
     pass
     saveJsonFile(file, wt, dicts, RefPointParaEncoder)
@@ -134,13 +163,26 @@ def saveRefPointParaDictToJson(file, wt, dicts):
     # pf.close()
 
 
+def readFromJson(filename, decoder):
+    pass
+    pf = open(filename)
+    data = pf.read()
+    obj = json.loads(data, encoding=decoder)
+    return obj
+
+
+def readRefPointParaDictFromJson(filename):
+    pass
+    return readFromJson(filename, RefPointParaEncoder)
+
+
+def readConnectMapFromJson(filename):
+    pass
+    return readFromJson(filename, ConnectMapEncoder)
+
+
 if __name__ == "__main__":
-    demo_list = []
-    for i in range(10):
-        p = RefPointPara([i, i**2], [2, 2], 0, 0, i**3)
-        demo_list.append(p)
-    a_dict = {'key': demo_list, 'k2': demo_list}
-    m_key = ConnectMapKey([1, 1])
-    cnn_map = {}
-    cnn_map[m_key] = ConnectMap([2, 2], 1, 12, 60)
-    saveRefPointParaDictToJson('demo.json', 'w', a_dict)
+    obj = readConnectMapFromJson('connect_map.json')
+    print(len(obj))
+    for _, key in enumerate(obj):
+        print('{}:{}'.format(key, obj[key]))

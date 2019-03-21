@@ -71,7 +71,10 @@ class ModifyMap:
             self.fig.canvas.draw()
         else:
             if len(self.draw_entity_list) > 0:
-                artist.set_color('b')
+                if artist.get_color() == 'r':
+                    pass
+                else:
+                    artist.set_color('b')
                 entity_id = int(artist.get_url())
                 self.draw_entity_list.remove(self.entity_dict[entity_id])
                 self.draw_artist_list.remove(artist)
@@ -241,7 +244,7 @@ class ModifyMap:
         self.ref_line_dict[ref_line_id] = ref_line
         start_point = str(ref_line[0].getPoint())
         end_point = ref_line[-1].getPoint()
-        ref_line_length = ref_line[-1].getS()
+        ref_line_length = ref_line[-1].s
         speed_limited = 60.0
         new_value = ([end_point, ref_line_id, ref_line_length, speed_limited])
         if start_point in self.connect_map_dict:
