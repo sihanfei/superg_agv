@@ -167,16 +167,37 @@ def saveRefPointParaDictToJson(file, wt, dicts):
 
 
 def readFromJson(filename, decoder):
-    pass
-    pf = open(filename)
-    data = pf.read()
-    obj = json.loads(data, encoding=decoder)
+    try:
+        pf = open(filename)
+        data = pf.read()
+        obj = json.loads(data, encoding=decoder)
+    except FileNotFoundError:
+        return False
+    pf.close()
     return obj
 
 
 def readRefPointParaDictFromJson(filename):
     pass
     return readFromJson(filename, RefPointParaEncoder)
+
+
+def initLineEntryFromJsonObj(JsonObj):
+    entity = LineEntity(JsonObj[0], JsonObj[1], JsonObj[2], JsonObj[3],
+                        JsonObj[4], JsonObj[5])
+
+    return entity
+
+
+def getLineEntryDictFromJsonObj(line_map_obj):
+    line_entities_dict = {}
+    # read data from file
+    for _, key in enumerate(line_map_obj):
+        if key == 0:
+            print("main: {}:{}".format(key, line_map_obj[key][0]))
+        entity = initLineEntryFromJsonObj(line_map_obj[key])
+        line_entities_dict[key] = entity
+    return line_entities_dict
 
 
 def readConnectMapFromJson(filename):

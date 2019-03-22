@@ -129,7 +129,7 @@ class MapService:
                 min_dist = distance
                 ref_line_id = key
                 min_point = tree_dict[key].data[index]
-        return ref_line_id, min_dist, min_point
+        return ref_line_id, min_point, min_dist
 
     def getNextIDbyID(self, currentID, connect_map_dict):
         return connect_map_dict[currentID]
@@ -138,8 +138,19 @@ class MapService:
         return ref_line_dict[currentID]
 
 
+def saveListtoTxt(filename, listvalue):
+    fp = open(filename, 'w')
+    try:
+        for value in listvalue:
+            fp.write(value)
+            fp.write('\n')
+    finally:
+        fp.close()
+
+
 if __name__ == "__main__":
-    line_map_obj = jft.readLineMapFromJson('Line_Map.json')
+    line_map_obj = jft.readLineMapFromJson(
+        '../data/map/zhenjiang/Line_Map.json')
     entities_dict = {}
     # read data from file
     for _, key in enumerate(line_map_obj):
@@ -152,13 +163,58 @@ if __name__ == "__main__":
     # connectmap
     calc_ref_line = CalcRefLine()
     connect_map_dict = calc_ref_line.makeConnectMap(entities_dict, 2)
+    # 保存连通图数据
+    fp = open('../data/map/zhenjiang/connect_map.json', 'w')
+    for _, key in enumerate(connect_map_dict):
+        value = connect_map_dict[key]
+        number = len(value)
+        fp.write(key)
+        fp.write(',')
+        fp.write(str(number))
+        for id in value:
+            fp.write(',')
+            fp.write(id)
+        fp.write('\n')
+    fp.close()
     # ref_line
     ref_line_dict = {}
     for _, key in enumerate(entities_dict):
         entity = entities_dict[key]
         ref_line = calc_ref_line.getRefLine(entity)
         ref_line_dict[key] = ref_line
+    # 保存参考点数据
+    #  point=[0.0, 0.0],
+    #  width=[2, 2],
+    #  cuv=0,
+    #  gcuv=0,
+    #  s=0,
+    #  theta=0):
+    fp = open('../data/map/zhenjiang/ref_line_map.json', 'w')
+    for _, key in enumerate(ref_line_dict):
+        ref_line = ref_line_dict[key]
+        for data in ref_line:
+            fp.write(key)
+            fp.write(',')
+            fp.write(str(data.point[0]))
+            fp.write(',')
+            fp.write(str(data.point[1]))
+            fp.write(',')
+            fp.write(str(data.s))
+            fp.write(',')
+            fp.write(str(data.theta))
+            fp.write(',')
+            fp.write(str(data.cuv))
+            fp.write(',')
+            fp.write(str(data.gcuv))
+            fp.write(',')
+            fp.write(str(data.width[1]))
+            fp.write(',')
+            fp.write(str(data.width[0]))
+            fp.write('\n')
+    fp.close()
     # 启动地图服务
     map_service = MapService()
     tree_dict = map_service.makeTreeDict(ref_line_dict)
+    # 简单测试
     print(map_service.getIDbyXYZ([100, 100], tree_dict))
+    # 保存
