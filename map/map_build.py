@@ -136,6 +136,13 @@ class ModifyMap:
                 self.releaseAllData()
                 self.fig.canvas.draw()
                 pass
+            else:
+                if len(self.line_entity_dict) > 0:
+                    print("onKeyPress: no start point: total_len = {}".format(
+                        len(self.line_entity_dict)))
+                    jft.saveLineMapToJson(self.filename, 'w',
+                                          self.line_entity_dict)
+
         elif event.key == 'b':
             pass
         else:
@@ -185,11 +192,12 @@ class EntityProc():
         else:
             return False
 
+def combineShowImgAndDXF(img_file, dxf_file):
+    pass
 
-"""##############################################
-"""
-if __name__ == "__main__":
-    img1 = PIImg.open("../data/map/zhenjiang/zhenjiang.bmp")
+def buildMapFromDXF(img_file, dxf_file, entities_map_file,
+                    out_connect_map_file, out_ref_line_map_file):
+    img1 = PIImg.open(img_file)
     npimg1 = np.array(img1)
     npimg1 = npimg1[-1:0:-1, :, :]
     scale = 1 / 0.116
@@ -201,21 +209,18 @@ if __name__ == "__main__":
     ax = fig.add_subplot(111)
 
     # 读取dxf文件
-    dxf_object = grb.readfile('../data/map/zhenjiang/zhenjiang.dxf')
+    dxf_object = grb.readfile(dxf_file)
 
-    total_ref_seg_id_list = []
-    total_ref_seg_entity = []
     total_ref_seg_dict = {}
     ref_seg_id = 0
 
     # 读取json文件,看是否entity已经存在过,
-    file_dir = '../data/map/zhenjiang'
-    line_entities_json_file = '../data/map/zhenjiang/entities_map.json'
+    line_entities_json_file = entities_map_file
     entities_map_obj = jft.readLineMapFromJson(line_entities_json_file)
     line_entities_dict = {}
     drawn_entities_num = 0
     if not entities_map_obj:
-        print('main: file not exist!')
+        print('main: entities_map.json not exist!')
     else:
         entity_proc = EntityProc()
         line_entities_dict = jft.getLineEntryDictFromJsonObj(entities_map_obj)
@@ -331,7 +336,7 @@ if __name__ == "__main__":
         calc_ref_line = mif.CalcRefLine()
         connect_map_dict = calc_ref_line.makeConnectMap(entities_dict, 2)
         # 保存连通图数据
-        fp = open('../data/map/zhenjiang/connect_map.json', 'w')
+        fp = open(out_connect_map_file, 'w')
         for _, key in enumerate(connect_map_dict):
             value = connect_map_dict[key]
             number = len(value)
@@ -356,7 +361,7 @@ if __name__ == "__main__":
         #  gcuv=0,
         #  s=0,
         #  theta=0):
-        fp = open(file_dir + '/ref_line.json', 'w')
+        fp = open(out_ref_line_map_file, 'w')
         for _, key in enumerate(ref_line_dict):
             ref_line = ref_line_dict[key]
             for data in ref_line:
@@ -379,9 +384,13 @@ if __name__ == "__main__":
                 fp.write(str(data.width[1]))
                 fp.write('\n')
         fp.close()
-        # 启动地图服务
-        map_service = mif.MapService()
-        tree_dict = map_service.makeTreeDict(ref_line_dict)
-        # 简单测试
-        print(map_service.getIDbyXYZ([100, 100], tree_dict))
-        # 保存
+
+
+"""##############################################
+"""
+if __name__ == "__main__":
+    buildMapFromDXF('../data/map/zhenjiang/zhenjiang.bmp',
+                    '../data/map/zhenjiang/zhenjiang.dxf',
+                    '../data/map/zhenjiang/entities_map.json',
+                    '../data/map/zhenjiang/connect_map.json',
+                    '../data/map/zhenjiang/ref_line_map.json')

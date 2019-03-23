@@ -111,9 +111,6 @@ class ConnectMap:
         self.ref_line_length = ref_line_length
         self.speed_limited = speed_limited
 
-    def setSpeedLimited(self, speed_limited):
-        self.speed_limited = speed_limited
-
 
 class ConnectMapKey:
     def __init__(self, start_point=[]):
@@ -144,9 +141,9 @@ def saveJsonFile(file, wt, dicts, encoder):
     pf.close()
 
 
-# def saveConnectMapToJson(file, wt, dicts):
-#     pass
-#     saveJsonFile(file, wt, dicts, ConnectMapEncoder)
+def saveConnectMapToJson(file, wt, dicts):
+    pass
+    saveJsonFile(file, wt, dicts, ConnectMapEncoder)
 
 
 def saveLineMapToJson(file, wt, dicts):
@@ -167,37 +164,16 @@ def saveRefPointParaDictToJson(file, wt, dicts):
 
 
 def readFromJson(filename, decoder):
-    try:
-        pf = open(filename)
-        data = pf.read()
-        obj = json.loads(data, encoding=decoder)
-    except FileNotFoundError:
-        return False
-    pf.close()
+    pass
+    pf = open(filename)
+    data = pf.read()
+    obj = json.loads(data, encoding=decoder)
     return obj
 
 
 def readRefPointParaDictFromJson(filename):
     pass
     return readFromJson(filename, RefPointParaEncoder)
-
-
-def initLineEntryFromJsonObj(JsonObj):
-    entity = LineEntity(JsonObj[0], JsonObj[1], JsonObj[2], JsonObj[3],
-                        JsonObj[4], JsonObj[5])
-
-    return entity
-
-
-def getLineEntryDictFromJsonObj(line_map_obj):
-    line_entities_dict = {}
-    # read data from file
-    for _, key in enumerate(line_map_obj):
-        if key == 0:
-            print("main: {}:{}".format(key, line_map_obj[key][0]))
-        entity = initLineEntryFromJsonObj(line_map_obj[key])
-        line_entities_dict[key] = entity
-    return line_entities_dict
 
 
 def readConnectMapFromJson(filename):
