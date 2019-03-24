@@ -1115,9 +1115,9 @@ AcDbViewportTableRecord
  21
 1
  12
-48493.67379411549
+71089.89039653607
  22
-34635.24126033444
+54123.6640888815
  13
 0
  23
@@ -1143,7 +1143,7 @@ AcDbViewportTableRecord
  37
 0
  40
-3213.479749706923
+46762.28490580824
  41
 2.226386806596702
  42
@@ -6779,6 +6779,34 @@ ByLayer
 100
 AcDbCircle
  10
+90750.00000000033
+ 20
+65050
+ 40
+2999.999999999665
+100
+AcDbArc
+ 50
+0
+ 51
+90
+  0
+ARC
+  5
+F0
+100
+AcDbEntity
+  8
+ref_line
+  6
+ByLayer
+ 62
+  256
+370
+   -1
+100
+AcDbCircle
+ 10
 108750.0000000001
  20
 65050
@@ -6793,7 +6821,7 @@ AcDbArc
   0
 ARC
   5
-F0
+F1
 100
 AcDbEntity
   8
@@ -6821,7 +6849,7 @@ AcDbArc
   0
 ARC
   5
-F1
+F2
 100
 AcDbEntity
   8
@@ -6849,7 +6877,7 @@ AcDbArc
   0
 ARC
   5
-F2
+F3
 100
 AcDbEntity
   8
@@ -6877,7 +6905,7 @@ AcDbArc
   0
 ARC
   5
-F3
+F4
 100
 AcDbEntity
   8
@@ -6905,7 +6933,7 @@ AcDbArc
   0
 ARC
   5
-F4
+F5
 100
 AcDbEntity
   8
@@ -6933,7 +6961,7 @@ AcDbArc
   0
 LINE
   5
-F5
+F6
 100
 AcDbEntity
   8
@@ -6957,7 +6985,7 @@ AcDbLine
   0
 LINE
   5
-F6
+F7
 100
 AcDbEntity
   8
@@ -6981,7 +7009,7 @@ AcDbLine
   0
 LINE
   5
-F7
+F8
 100
 AcDbEntity
   8
@@ -7005,7 +7033,7 @@ AcDbLine
   0
 LINE
   5
-F8
+F9
 100
 AcDbEntity
   8
@@ -7029,7 +7057,7 @@ AcDbLine
   0
 LINE
   5
-F9
+FA
 100
 AcDbEntity
   8
@@ -7053,7 +7081,7 @@ AcDbLine
   0
 LINE
   5
-FA
+FB
 100
 AcDbEntity
   8
@@ -7077,7 +7105,7 @@ AcDbLine
   0
 LINE
   5
-FB
+FC
 100
 AcDbEntity
   8
@@ -7101,7 +7129,7 @@ AcDbLine
   0
 LINE
   5
-FC
+FD
 100
 AcDbEntity
   8
@@ -7125,7 +7153,7 @@ AcDbLine
   0
 LINE
   5
-FD
+FE
 100
 AcDbEntity
   8
@@ -7149,7 +7177,7 @@ AcDbLine
   0
 LINE
   5
-FE
+FF
 100
 AcDbEntity
   8
@@ -7173,7 +7201,7 @@ AcDbLine
   0
 LINE
   5
-FF
+100
 100
 AcDbEntity
   8
@@ -7197,7 +7225,7 @@ AcDbLine
   0
 LINE
   5
-100
+101
 100
 AcDbEntity
   8
@@ -7221,7 +7249,7 @@ AcDbLine
   0
 LINE
   5
-101
+102
 100
 AcDbEntity
   8
@@ -7245,7 +7273,7 @@ AcDbLine
   0
 LINE
   5
-102
+103
 100
 AcDbEntity
   8
@@ -7269,7 +7297,7 @@ AcDbLine
   0
 LINE
   5
-103
+104
 100
 AcDbEntity
   8
@@ -7293,7 +7321,7 @@ AcDbLine
   0
 LINE
   5
-104
+105
 100
 AcDbEntity
   8
@@ -7317,7 +7345,7 @@ AcDbLine
   0
 LINE
   5
-105
+106
 100
 AcDbEntity
   8
@@ -7341,7 +7369,7 @@ AcDbLine
   0
 LINE
   5
-106
+107
 100
 AcDbEntity
   8
@@ -7365,7 +7393,7 @@ AcDbLine
   0
 LINE
   5
-107
+108
 100
 AcDbEntity
   8
@@ -7389,7 +7417,7 @@ AcDbLine
   0
 LINE
   5
-108
+109
 100
 AcDbEntity
   8
@@ -7413,7 +7441,7 @@ AcDbLine
   0
 LINE
   5
-109
+10A
 100
 AcDbEntity
   8
@@ -7437,7 +7465,7 @@ AcDbLine
   0
 LINE
   5
-10A
+10B
 100
 AcDbEntity
   8
@@ -7461,7 +7489,7 @@ AcDbLine
   0
 LINE
   5
-10B
+10C
 100
 AcDbEntity
   8
@@ -7485,7 +7513,7 @@ AcDbLine
   0
 LINE
   5
-10C
+10D
 100
 AcDbEntity
   8
@@ -7509,7 +7537,7 @@ AcDbLine
   0
 LINE
   5
-10D
+10E
 100
 AcDbEntity
   8
@@ -7533,7 +7561,7 @@ AcDbLine
   0
 LINE
   5
-10E
+10F
 100
 AcDbEntity
   8
@@ -7557,7 +7585,7 @@ AcDbLine
   0
 LINE
   5
-10F
+110
 100
 AcDbEntity
   8
@@ -7581,7 +7609,7 @@ AcDbLine
   0
 LINE
   5
-110
+111
 100
 AcDbEntity
   8
@@ -7605,7 +7633,7 @@ AcDbLine
   0
 LINE
   5
-111
+112
 100
 AcDbEntity
   8
@@ -7629,7 +7657,7 @@ AcDbLine
   0
 LINE
   5
-112
+113
 100
 AcDbEntity
   8
@@ -7653,7 +7681,7 @@ AcDbLine
   0
 LINE
   5
-113
+114
 100
 AcDbEntity
   8
@@ -7677,7 +7705,7 @@ AcDbLine
   0
 LINE
   5
-114
+115
 100
 AcDbEntity
   8
@@ -7701,7 +7729,7 @@ AcDbLine
   0
 LINE
   5
-115
+116
 100
 AcDbEntity
   8
@@ -7725,7 +7753,7 @@ AcDbLine
   0
 LINE
   5
-116
+117
 100
 AcDbEntity
   8
@@ -7749,7 +7777,7 @@ AcDbLine
   0
 LINE
   5
-117
+118
 100
 AcDbEntity
   8
@@ -7773,7 +7801,7 @@ AcDbLine
   0
 LINE
   5
-118
+119
 100
 AcDbEntity
   8
@@ -7797,7 +7825,7 @@ AcDbLine
   0
 LINE
   5
-119
+11A
 100
 AcDbEntity
   8
@@ -7821,7 +7849,7 @@ AcDbLine
   0
 LINE
   5
-11A
+11B
 100
 AcDbEntity
   8
@@ -7845,7 +7873,7 @@ AcDbLine
   0
 LINE
   5
-11B
+11C
 100
 AcDbEntity
   8
@@ -7869,7 +7897,7 @@ AcDbLine
   0
 LINE
   5
-11C
+11D
 100
 AcDbEntity
   8
@@ -7893,7 +7921,7 @@ AcDbLine
   0
 LINE
   5
-11D
+11E
 100
 AcDbEntity
   8
@@ -7917,7 +7945,7 @@ AcDbLine
   0
 LINE
   5
-11E
+11F
 100
 AcDbEntity
   8
@@ -7941,7 +7969,7 @@ AcDbLine
   0
 ARC
   5
-11F
+120
 100
 AcDbEntity
   8
@@ -7969,7 +7997,7 @@ AcDbArc
   0
 ARC
   5
-120
+121
 100
 AcDbEntity
   8
@@ -7997,7 +8025,7 @@ AcDbArc
   0
 ARC
   5
-121
+122
 100
 AcDbEntity
   8
@@ -8025,7 +8053,7 @@ AcDbArc
   0
 ARC
   5
-122
+123
 100
 AcDbEntity
   8
@@ -8053,7 +8081,7 @@ AcDbArc
   0
 LINE
   5
-123
+124
 100
 AcDbEntity
   8
@@ -8077,7 +8105,7 @@ AcDbLine
   0
 LINE
   5
-124
+125
 100
 AcDbEntity
   8
@@ -8101,7 +8129,7 @@ AcDbLine
   0
 ARC
   5
-125
+126
 100
 AcDbEntity
   8
@@ -8129,7 +8157,7 @@ AcDbArc
   0
 ARC
   5
-126
+127
 100
 AcDbEntity
   8
@@ -8157,7 +8185,7 @@ AcDbArc
   0
 LINE
   5
-127
+128
 100
 AcDbEntity
   8

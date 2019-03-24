@@ -57,6 +57,10 @@ class ModifyMap:
                 self.artist.set_color('r')
                 self.fig.canvas.draw()
                 print("onPick: id={}".format(self.line_entity_id))
+                if self.entity.dxftype == 'ARC':
+                    print("onPick: id={}, sangle={}, eangle={}".format(
+                        self.line_entity_id, self.entity.start_angle,
+                        self.entity.end_angle))
             else:
                 if artist == self.artist and len(self.start_point) == 0:
                     m_point = [mousevent.xdata, mousevent.ydata]
@@ -192,12 +196,14 @@ class EntityProc():
         else:
             return False
 
+
 def combineShowImgAndDXF(img_file, dxf_file):
     pass
 
-def buildMapFromDXF(img_file, dxf_file, entities_map_file,
+
+def buildMapFromDXF(in_img_file, in_dxf_file, inout_entities_map_file,
                     out_connect_map_file, out_ref_line_map_file):
-    img1 = PIImg.open(img_file)
+    img1 = PIImg.open(in_img_file)
     npimg1 = np.array(img1)
     npimg1 = npimg1[-1:0:-1, :, :]
     scale = 1 / 0.116
@@ -209,13 +215,13 @@ def buildMapFromDXF(img_file, dxf_file, entities_map_file,
     ax = fig.add_subplot(111)
 
     # 读取dxf文件
-    dxf_object = grb.readfile(dxf_file)
+    dxf_object = grb.readfile(in_dxf_file)
 
     total_ref_seg_dict = {}
     ref_seg_id = 0
 
     # 读取json文件,看是否entity已经存在过,
-    line_entities_json_file = entities_map_file
+    line_entities_json_file = inout_entities_map_file
     entities_map_obj = jft.readLineMapFromJson(line_entities_json_file)
     line_entities_dict = {}
     drawn_entities_num = 0
@@ -278,12 +284,10 @@ def buildMapFromDXF(img_file, dxf_file, entities_map_file,
                 radius = entity.radius
 
                 entity.start_angle = entity.start_angle * np.pi / 180
+                entity.end_angle = entity.end_angle * np.pi / 180
+                if entity.start_angle > entity.end_angle:
+                    entity.start_angle = entity.start_angle - 2 * np.pi
                 start_angle = entity.start_angle
-
-                if entity.end_angle == 0:
-                    entity.end_angle = 2 * np.pi
-                else:
-                    entity.end_angle = entity.end_angle * np.pi / 180
                 end_angle = entity.end_angle
 
                 delta_angle = (end_angle - start_angle) / (radius * 2 * np.pi

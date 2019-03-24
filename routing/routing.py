@@ -108,8 +108,8 @@ if __name__ == "__main__":
     ax.autoscale(False)
 
     try:
-        path = nx.shortest_path(G, 34, 33, weight='length')
-        length = nx.shortest_path_length(G, 34, 33, weight='length')
+        length = nx.shortest_path_length(G, 71, 25, weight='length')
+        path = nx.shortest_path(G, 71, 25, weight='length')
         print('path:{}, length:{}'.format(path, length))
     except nx.NetworkXNoPath:
         print('No path')
