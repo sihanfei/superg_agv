@@ -12,15 +12,13 @@ class LineEntity:
                  end=[],
                  angle=[],
                  center=[],
-                 radius=0,
-                 length=0):
+                 radius=0):
         self.linetype = linetype
         self.start = list(start)
         self.end = list(end)
         self.angle = list(angle)
         self.center = list(center)
         self.radius = radius
-        self.length = length
 
 
 class RefPointPara:
@@ -146,9 +144,9 @@ def saveJsonFile(file, wt, dicts, encoder):
     pf.close()
 
 
-# def saveConnectMapToJson(file, wt, dicts):
-#     pass
-#     saveJsonFile(file, wt, dicts, ConnectMapEncoder)
+def saveConnectMapToJson(file, wt, dicts):
+    pass
+    saveJsonFile(file, wt, dicts, ConnectMapEncoder)
 
 
 def saveLineMapToJson(file, wt, dicts):
@@ -203,8 +201,24 @@ def getLineEntryDictFromJsonObj(line_map_obj):
 
 
 def readConnectMapFromJson(filename):
-    pass
-    return readFromJson(filename, ConnectMapEncoder)
+    # try:
+    #     fp = open(filename, 'r')
+    #     lines = fp.readlines()
+    #     for line in lines:
+    #         print(line[0])
+    # except FileExistsError:
+    #     return False
+    # finally:
+    #     fp.close()
+    # return True
+    try:
+        fp = open(filename)
+        obj = json.load(fp, object_hook='array')
+        print(obj)
+    except FileExistsError:
+        return False
+    finally:
+        fp.close()
 
 
 def readLineMapFromJson(filename):
@@ -213,7 +227,4 @@ def readLineMapFromJson(filename):
 
 
 if __name__ == "__main__":
-    obj = readConnectMapFromJson('connect_map.json')
-    print(len(obj))
-    for _, key in enumerate(obj):
-        print('{}:{}'.format(key, obj[key]))
+    obj = readConnectMapFromJson('../data/map/zhenjiang/connect_map.json')

@@ -1,0 +1,900 @@
+# -*- coding:utf-8 -*-
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+import map_interface as mif
+
+g_flag_ref_line_begin = False
+g_flag_ref_line_end = False
+g_point_x = 0
+g_point_y = 0
+g_slide_window = 0
+
+
+# def onMotion(event):
+#   x=event.xdata
+#   y=event.ydata
+#   visible = ann.get_visible()
+#   if event.inaxes == ax:
+#     contain, _ = ref_line.contains(event)
+#     if contain:
+#       plt.plot(x,y,'ro')
+#       ann.xy = (x,y)
+#       ann.set_text(str(y))
+#       ann.set_visible(True)
+#     else:
+#       if visible:
+#         ann.set_visible(False)
+#     event.canvas.draw_idle()
+
+class MapModify:
+  def __init__(self, fig):
+    self.fig = fig
+    self.get_ref_line_flag = False
+    self.rect_x = 0
+    self.rect_y = 0
+    self.ref_line_dict = {}
+    self.ref_line_list = []
+    self.road_id_list = []
+    self.road_id = 0
+    self.ax = self.fig.gca()
+    self.ann = self.ax.annotate("", xy=(0,0), xytext=(-50,50), textcoords="offset pixels", 
+                      bbox=dict(boxstyle="round", fc='r'), arrowprops=dict(arrowstyle="<->"))
+    self.ann.set_text("select point by drag")
+
+
+  def onButtonPress(self, event):
+    if event.button == 1: # 单击左键
+      x = event.xdata
+      y = event.ydata
+      
+      if self.get_ref_line_flag and len(self.ref_line_list)>0: # 选点结束
+        self.ann.set_visible(False) # 关闭显示
+        event.canvas.draw_idle()
+        # save the point list to vect
+        self.road_id = self.road_id + 1 # 增加一个新id
+        self.road_id_list.append(self.road_id) # 添加到road_id_list
+        self.ref_line_dict[self.road_id] = self.ref_line_list # 把 id:ref_line添加进地图字典
+      
+      if not self.get_ref_line_flag and len(self.ref_line_list)==0: # 选点开始
+        self.ann.xy = (x,y)
+        self.ann.set_visible(True)
+        event.canvas.draw_idle()
+
+      self.get_ref_line_flag = not self.get_ref_line_flag  # 每点击一次左键，flag翻转一次
+    
+    else: # 其他按键
+      self.get_ref_line_flag = False
+      self.ann.set_visible(False)
+      event.canvas.draw_idle()
+    
+    return
+
+  def onButtonRelease(self, event):
+#    self.get_ref_line_flag = False
+    return
+
+  def onMotion(self, event):
+    if self.get_ref_line_flag:
+      print(event.xdata, event.ydata)
+    return
+
+  def connect(self):
+    self.fig.canvas.mpl_connect('button_press_event', mm.onButtonPress)
+    self.fig.canvas.mpl_connect('button_release_event', mm.onButtonRelease)
+    self.fig.canvas.mpl_connect('motion_notify_event', mm.onMotion)
+    return
+
+"""##############################################
+"""
+if __name__ == "__main__":
+  direct = "../data/GPS_info/"
+  coordi_type = "gps_"
+  namelist = ['b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']
+
+  """
+  # read data from files
+  """
+  filename = coordi_type + "a" + ".txt" + ".txt"
+  data = np.loadtxt(direct+filename, delimiter='\t', usecols=[1,2])
+
+  for alphabet in namelist:
+    filename = coordi_type + alphabet + ".txt" + ".txt"
+    try:
+      data1=np.loadtxt(direct+filename, delimiter='\t', usecols=[1,2])
+    except IOError:
+      print("file open failed")
+      break
+    
+    if(data1.size!=0):
+      data = np.concatenate((data, data1), axis=0)
+    else:
+      print("%s is empty file!" %(filename))
+    
+    print("now loading {}".format(filename))
+  
+  """
+  # transfer from gps to xyz
+  """
+  xyz_map = data*111000 # need modified
+
+  """################################################################################
+  " matplot
+  """
+
+  fig = plt.figure("basic_map")
+  ax = fig.gca()
+#  ax = fig.add_subplot(111)
+  ref_line, = plt.plot(xyz_map[:,0], xyz_map[:,1], 'o', picker=5)
+
+  mm = MapModify(fig)
+  mm.connect()
+  
+  plt.show()
+
+++++++++++++++++++++++++++++++
+# # -*- coding:utf-8 -*-
+
+# import numpy as np
+# import matplotlib.pyplot as plt
+# import scipy.spatial as spt
+
+# class ModifyMap:
+#   def __init__(self, fig, gps_map):
+#     self.map_tree = spt.KDTree(gps_map)
+#     self.fig = fig
+#     self.begin_point = ()
+#     self.end_point = ()
+#     self.road_id = 0
+#     self.road_id_list = []
+#     self.ref_line = []
+#     self.ref_line_dict = {}
+#     self.ax = self.fig.gca()
+#     self.ann = self.ax.annotate("", xy=(0,0), xytext=(-50,50), textcoords="offset pixels", 
+#                       bbox=dict(boxstyle="round", fc='r'), arrowprops=dict(arrowstyle="<->"))
+#     self.button = 0
+  
+#   def onButtonPress(self, event):
+#     if event.button == 1: # left click
+#       x = event.xdata
+#       y = event.ydata
+#       # seek point
+#       (dis, nearest_point_index) = self.map_tree.query((x, y))
+#       self.nearest_points = self.map_tree.data[nearest_point_index]
+#       # set point
+#       if len(self.begin_point) == 0: # begin
+#         self.begin_point = self.nearest_points
+#         self.ann.xy = self.begin_point
+#         self.ann.set_text("right click to repick start")
+#         self.ann.set_visible(True)
+#         event.canvas.draw_idle()
+#         print("start")
+#       else:
+#         if len(self.end_point) == 0: # end
+#           self.end_point = self.nearest_points
+#           self.ann.xy = self.end_point
+#           self.ann.set_text("right click to repick end")
+#           self.ann.set_visible(True)
+#           event.canvas.draw_idle()
+#           print("end")
+#         else: # save to vect
+#           self.ann.xy = (event.xdata, event.ydata)
+#           self.ann.set_text("save ref_line")
+#           self.ann.set_visible(True)
+#           event.canvas.draw_idle()
+#           self.end_point = []
+#           self.begin_point = []
+#           #save data
+#           print("save")
+#     else: # right click
+#       if len(self.end_point)>0:
+#         self.ann.xy = self.begin_point
+#         self.ann.set_text("repick the end point")
+#         self.ann.set_visible(True)
+#         event.canvas.draw_idle()
+#         self.end_point = []
+#         print("re_end")
+#       else:
+#         if len(self.begin_point)>0:
+#           self.ann.set_visible(False)
+#           event.canvas.draw_idle()
+#           self.end_point = []
+#           self.begin_point = []
+#           print("re_start")
+
+#   def onButtonRelease(self, event):
+#     return
+  
+#   def callBackConnect(self):
+#     self.fig.canvas.mpl_connect('button_press_event', self.onButtonPress)
+#     self.fig.canvas.mpl_connect('button_release_event', self.onButtonPress)
+#     return
+
+#   def callBackDisconnect(self):
+#     self.fig.canvas.mpl_disconnect('pick_event', self.onPick)
+#     self.fig.canvas.mpl_disconnect('button_press_event', self.onButtonPress)
+#     self.fig.canvas.mpl_disconnect('button_release_event', self.onButtonPress)
+#     return
+
+# """##############################################
+# """
+# if __name__ == "__main__":
+#   direct = "../data/GPS_info/"
+#   coordi_type = "gps_"
+#   namelist = ['b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']
+
+#   """
+#   # read data from files
+#   """
+#   filename = coordi_type + "a" + ".txt" + ".txt"
+#   data = np.loadtxt(direct+filename, delimiter='\t', usecols=[1,2])
+
+#   for alphabet in namelist:
+#     filename = coordi_type + alphabet + ".txt" + ".txt"
+#     try:
+#       data1=np.loadtxt(direct+filename, delimiter='\t', usecols=[1,2])
+#     except IOError:
+#       print("file open failed")
+#       break
+    
+#     if(data1.size!=0):
+#       data = np.concatenate((data, data1), axis=0)
+#     else:
+#       print("%s is empty file!" %(filename))
+    
+#     print("now loading {}".format(filename))
+  
+#   """
+#   # transfer from gps to xyz
+#   """
+#   xyz_map = data*111000 # need modified
+
+#   """################################################################################
+#   # matplot
+#   # 1.对数据分两个维度分别进行排序
+#   # 2.绘图
+#   # 3.左键选起始点，右键取消
+#   # 4.左键选结束点，右键取消
+#   # 5.保存
+#   """
+
+#   fig = plt.figure("basic_map")
+
+#   map_tree = spt.KDTree(xyz_map)
+#   print(map_tree.data.shape)
+
+#   x = xyz_map[:, 0]
+#   y = xyz_map[:, 1] 
+#   plt.plot(x, y, 'o')
+
+#   map_mod = ModifyMap(fig, xyz_map)
+#   map_mod.callBackConnect()
+
+#   plt.show()
+
+# -*- coding:utf-8 -*-
+
+import numpy as np
+import matplotlib.pyplot as plt
+import scipy.spatial as spt
+
+class prepareData:
+  def __init__(self, data_dir):
+    self.data_dir = data_dir
+    return
+  
+  def proceedMap(self):
+    filename = self.data_dir + "map_point_data.csv"
+    try:
+      point_data = np.loadtxt(filename, delimiter=',')
+      longi = point_data[:,0]
+      lanti = point_data[:,1]
+      longi_uni, index = np.unique(longi, return_index=True)
+      lanti_uni = lanti[return_index]
+    except IOError:
+      print("cannot open file")
+      return False
+    return True
+
+class ModifyMap:
+  def __init__(self, fig, gps_map):
+    self.map_tree = spt.KDTree(gps_map)
+    self.fig = fig
+    self.road_point = []
+    self.road_point_id = 0
+    self.road_point_id_list = []
+    self.road_point_dict = {}
+    self.road_point_list = []
+    
+    self.ax = fig.gca()
+    self.annt_dict = {}
+  
+  def onPick(self, event):
+    mousevent = event.mouseevent
+    thisline = event.artist
+    xdata = thisline.get_xdata()
+    ydata = thisline.get_ydata()
+    ind = event.ind
+    points = tuple(zip(xdata[ind], ydata[ind]))
+
+    if mousevent.button == 1: # if left_button pressed, add the point to road_point_list
+      self.road_point = points[0] # get point
+      self.road_point_id = self.road_point_id + 1 # set point_id
+      self.drawPointID(self.road_point_id, self.road_point)
+      print("{} points in the list".format(len(self.road_point_id_list)))
+
+    else: # right select will delete the point
+      road_point = self.getSamePoint(points, self.road_point_list)
+      if road_point != 0:
+        road_point_id = list(self.road_point_dict.keys()) [list(self.road_point_dict.values()).index (road_point)]
+        self.destroyPointID(road_point_id)
+      pass
+
+    return
+
+  def getSamePoint(self, list1, list2):
+    list_a = [a for a in list1 if a in list2]
+    if len(list_a)>0:
+      return list_a[0]
+    else:
+      return 0
+
+  def onButtonPress(self, event):
+    # if event.button != 1:
+    #   if len(self.road_point_id_list)>0:
+    #     print("now {} point in list".format(len(self.road_point_id_list)))
+    #     print("now id={}".format(self.road_point_id))
+    #     self.road_point_id = self.road_point_id_list[-1]
+    #     print("refresh id={}".format(self.road_point_id))
+    #     self.destroyPointID(self.road_point_id)
+    #     print("destroy id={}".format(self.road_point_id))
+    #   else:
+    #     print("no point in road_point_list")
+    return
+
+  def onKeyPress(self, event):
+    if event.key == 'v':
+      if self.road_id > 0:
+        print("saving data to file")
+    return
+
+  def callBackConnect(self):
+    self.fig.canvas.mpl_connect('pick_event', self.onPick)
+    self.fig.canvas.mpl_connect('button_press_event', self.onButtonPress)
+    self.fig.canvas.mpl_connect('key_release_event', self.onKeyPress)
+    return
+
+  def callBackDisconnect(self):
+    self.fig.canvas.mpl_disconnect('pick_event', self.onPick)
+    self.fig.canvas.mpl_disconnect('button_press_event', self.onButtonPress)
+    self.fig.canvas.mpl_disconnect('key_press_event', self.onKeyPress)
+    return
+
+  def drawPointID(self, point_ID, road_point):
+    # add the point/ID/annotate
+    self.road_point_id_list.append(point_ID) 
+    self.road_point_dict[point_ID] = road_point
+    self.road_point_list.append(road_point) 
+    plt.plot(road_point[0], road_point[1], 'ro')
+    annt = ax.annotate("", xy=(0,0), xytext=(-20,20), textcoords="offset pixels", 
+                      bbox=dict(boxstyle="round", fc='r'), arrowprops=dict(arrowstyle="-"))
+    annt.set_text(str(point_ID))
+    annt.xy = road_point
+    annt.set_visible(True)
+    self.annt_dict[point_ID] = annt
+    self.fig.canvas.draw()
+
+  def destroyPointID(self, point_ID):
+    road_point = self.road_point_dict[point_ID]
+    # remove the point/the id/annotate
+    del(self.road_point_dict[point_ID])
+    self.road_point_list.remove(road_point)
+    self.road_point_id_list.remove(point_ID)
+    if len(self.road_point_id_list)==0:
+      self.road_point_id = 0
+    else:
+      self.road_point_id = self.road_point_id_list[-1]
+    annt = self.annt_dict[point_ID]
+    del(self.annt_dict[point_ID])
+    annt.remove()
+    plt.plot(road_point[0], road_point[1], 'bo') # overwrite the point
+    self.fig.canvas.draw()
+
+"""##############################################
+"""
+if __name__ == "__main__":
+  direct = "../data/GPS_info/"
+  coordi_type = "gps_"
+  namelist = ['b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']
+
+  """
+  # read data from files
+  """
+  filename = coordi_type + "a" + ".txt" + ".txt"
+  data = np.loadtxt(direct+filename, delimiter='\t', usecols=[1,2])
+
+  for alphabet in namelist:
+    filename = coordi_type + alphabet + ".txt" + ".txt"
+    try:
+      data1=np.loadtxt(direct+filename, delimiter='\t', usecols=[1,2])
+    except IOError:
+      print("file open failed")
+      break
+    
+    if(data1.size!=0):
+      data = np.concatenate((data, data1), axis=0)
+    else:
+      print("%s is empty file!" %(filename))
+    
+    print("now loading {}".format(filename))
+  
+  """
+  # transfer from gps to xyz
+  """
+  xyz_map = data*111000 # need modified
+
+  """################################################################################
+  # matplot
+  # 1.对数据分两个维度分别进行排序
+  # 2.绘图
+  # 3.左键选起始点，右键取消
+  # 4.左键选结束点，右键取消
+  # 5.保存
+  """
+
+
+  map_tree = spt.KDTree(xyz_map)
+  print(map_tree.data.shape)
+
+  x = xyz_map[:, 0]
+  y = xyz_map[:, 1] 
+  fig = plt.figure()
+  ax = fig.add_subplot(111)
+  ax.set_title('modify map')
+  orig_fig, = ax.plot(x, y, 'o', picker=5)
+
+  map_mod = ModifyMap(fig, xyz_map)
+  map_mod.callBackConnect()
+
+  plt.show()
+
+ msg.info.resolution = 0.116; //地图珊格大小 msg.info.width = matSrc.cols; //地图大小 取图像像素 1000*994 msg.info.height = matSrc.rows; msg.info.origin.position.x = 18.75; //地图偏移 msg.info.origin.position.y = -0.75;
+
+
+
+=============================================================================================
+
+ # # -*- coding:utf-8 -*-
+
+import numpy as np
+import matplotlib.pyplot as plt
+import scipy.spatial as spt
+import matplotlib.image as mpimg
+import PIL.Image as PIImg
+
+# class prepareData:
+#   def __init__(self, data_dir):
+#     self.data_dir = data_dir
+#     return
+  
+#   def proceedMap(self):
+#     filename = self.data_dir + "map_point_data.csv"
+#     try:
+#       point_data = np.loadtxt(filename, delimiter=',')
+#       longi = point_data[:,0]
+#       lanti = point_data[:,1]
+#       longi_uni, index = np.unique(longi, return_index=True)
+#       lanti_uni = lanti[return_index]
+#     except IOError:
+#       print("cannot open file")
+#       return False
+#     return True
+
+"""
+# 选择接续点的工具类
+"""
+class ModifyMap:
+  def __init__(self, fig, gps_map, annt_dict, point_dict):
+    self.map_tree = spt.KDTree(gps_map)
+    self.total_point = gps_map.tolist
+    self.fig = fig
+    self.road_point = []
+    self.road_point_dict = point_dict
+    self.annt_dict = annt_dict
+    self.road_point_id_list = []
+    self.road_point_list = []
+    if len(point_dict) > 0:
+      for ind, ID in enumerate(point_dict):
+        self.road_point_id_list.append(ID)
+        self.road_point_list.append(point_dict[ID])
+      self.road_point_id = self.road_point_id_list[-1]
+    else:
+      self.road_point_id = 0
+      self.road_point_list = []
+    self.ax = fig.gca()
+    # 参考线数据
+    self.start_point = ()
+    self.end_point = ()
+    self.ref_line_list = []
+    self.ref_line_dict = {}
+    self.ref_line_id_list = []
+  
+  def onPick(self, event):
+    mousevent = event.mouseevent
+    thisline = event.artist
+    xdata = thisline.get_xdata()
+    ydata = thisline.get_ydata()
+    ind = event.ind
+    points = tuple(zip(xdata[ind], ydata[ind]))
+
+    if mousevent.button == 1: # if left_button pressed, add the point to road_point_list
+      self.road_point = points[-1] # get point
+      self.road_point_id = self.road_point_id + 1 # set point_id
+      self.drawPoint(self.road_point)
+      print("{} points in the list".format(len(self.road_point_id_list)))
+      
+      if len(self.start_point) == 0:
+        self.start_point = points[-1]
+      else:
+        if len(self.end_point) == 0:
+          self.end_point = points[-1]
+          self.seekPointonLine(self.start_point, self.end_point)
+          self.start_point = self.end_point
+          self.end_point = [] 
+      
+    else: # right select will delete the point
+      road_point = self.getSamePoint(points, self.road_point_list)
+      if road_point != 0:
+        road_point_id = list(self.road_point_dict.keys()) [list(self.road_point_dict.values()).index (road_point)]
+        self.destroyPointID(road_point_id)
+      pass
+    return
+
+  # 根据起点和终点，在gps_map上查找连接两者的点集
+  def seekPointonLine(self, start_point, end_point):
+    start_ind = self.total_point.index(start_point)
+    print start_ind
+    end_ind = self.total_point.index(end_point)
+    print end_ind
+    if start_ind > end_ind:
+      next_point_ind = start_ind - 1
+    elif start_ind < end_ind:
+      next_point_ind = start_ind + 1
+    else:
+      pass
+    next_point = self.total_point[start_ind]
+    self.drawPoint()
+
+    return
+
+  # 计算给定两点的直线距离
+  def calcDistance(self, p1, p2):
+    return
+
+  def getSamePoint(self, list1, list2):
+    list_a = [a for a in list1 if a in list2]
+    if len(list_a) > 0:
+      return list_a[0]
+    else:
+      return 0
+
+  def onButtonPress(self, event):
+    # if event.button != 1:
+    #   if len(self.road_point_id_list)>0:
+    #     print("now {} point in list".format(len(self.road_point_id_list)))
+    #     print("now id={}".format(self.road_point_id))
+    #     self.road_point_id = self.road_point_id_list[-1]
+    #     print("refresh id={}".format(self.road_point_id))
+    #     self.destroyPointID(self.road_point_id)
+    #     print("destroy id={}".format(self.road_point_id))
+    #   else:
+    #     print("no point in road_point_list")
+    return
+
+  def onKeyPress(self, event):
+    if event.key == 'v':
+      pass
+    return
+
+  def callBackConnect(self):
+    self.fig.canvas.mpl_connect('pick_event', self.onPick)
+    self.fig.canvas.mpl_connect('button_press_event', self.onButtonPress)
+    self.fig.canvas.mpl_connect('key_release_event', self.onKeyPress)
+    return
+
+  def callBackDisconnect(self):
+    self.fig.canvas.mpl_disconnect(self.onPick)
+    self.fig.canvas.mpl_disconnect(self.onButtonPress)
+    self.fig.canvas.mpl_disconnect(self.onKeyPress)
+    return
+
+  def drawPoint(self, road_point):
+    # add the point/ID/annotate
+    plt.plot(road_point[0], road_point[1], 'r.')
+    self.fig.canvas.draw()
+
+  def destroyPointID(self, point_ID):
+    road_point = self.road_point_dict[point_ID]
+    # remove the point/the id/annotate
+    del(self.road_point_dict[point_ID])
+    self.road_point_list.remove(road_point)
+    self.road_point_id_list.remove(point_ID)
+    if len(self.road_point_id_list) == 0:
+      self.road_point_id = 0
+    else:
+      self.road_point_id = self.road_point_id_list[-1]
+    annt = self.annt_dict[point_ID]
+    del(self.annt_dict[point_ID])
+    annt.remove()
+    plt.plot(road_point[0], road_point[1], 'g.') # overwrite the point
+    self.fig.canvas.draw()
+
+"""##############################################
+"""
+if __name__ == "__main__":
+  """#################################################################
+  # 准备进行接续点的选择
+  """
+  direct = "../data/GPS_info/"
+  filename = "map_point_data.csv"
+
+  xyz_map = np.loadtxt(direct+filename, delimiter=',')
+  img1 = PIImg.open(direct+"zhenjiang.bmp")
+  npimg1 = np.array(img1)
+  npimg1 = npimg1[-1:0:-1,:,:]
+  scale = 1/0.116
+  bias = [18.75, -0.75]
+  xyz_map = (xyz_map-bias)*scale # 针对镇江地图的偏移
+
+  # 读入已经保存的数据地图
+  infile = open("point_id_list.csv", 'a+') 
+  try:
+    point_id_list = np.loadtxt("point_id_list.csv", delimiter=',', usecols=[0])
+  finally:
+    infile.close()
+
+  infile = open("point_list.csv", 'a+')
+  try:
+    point_list = np.loadtxt("point_list.csv", delimiter=',')
+  finally:
+    infile.close()
+
+  # 准备绘图
+  x = xyz_map[:, 0]
+  y = xyz_map[:, 1] 
+  fig = plt.figure()
+  ax = fig.add_subplot(111)
+  ax.set_title('modify map')
+  ax.plot(x, y, 'g.', picker = 5)
+
+  # 已经存在数据
+  annt_dict = {}
+  point_dict = {}
+  if len(point_list)>0:
+    # 转换点集ID类型
+    tmp_point_id_list = []
+    for point_id in point_id_list:
+      tmp_point_id_list.append(int(point_id))
+    point_id_list = tmp_point_id_list
+
+    # 绘制标记点
+    ax.plot(point_list[:,0], point_list[:,1], 'r.', picker=5)
+    for i in range(len(point_list)):
+      annt = ax.annotate("", xy = (0,0), xytext = (-20,20), textcoords = "offset pixels", 
+                        bbox = dict(boxstyle = "round", fc = 'r'), arrowprops = dict(arrowstyle = "-"))
+      annt.set_text(str(point_id_list[i]))
+      annt.xy = point_list[i]
+      annt.set_visible(True)
+      annt_dict[point_id_list[i]] = annt
+      point_dict[point_id_list[i]] = tuple(point_list[i])
+
+    # 转换点集类型
+    tmp_point_list = []
+    for point in point_list:
+      tmp_point_list.append(tuple(point))
+    point_list = tmp_point_list
+  else:
+    point_id_list = []
+    point_list = []
+
+  # 显示并关联到选点程序
+  ax.imshow(npimg1, origin = 'lower')
+  ax.autoscale(False)
+  map_modi = ModifyMap(fig, xyz_map, annt_dict, point_dict)
+  map_modi.callBackConnect()
+  plt.show()
+
+  # 断开连接，保存接续点数据
+  map_modi.callBackDisconnect()
+  if len(map_modi.road_point_id_list)>0:
+    output = open('point_id_list.csv', 'w')
+    try:
+      np.savetxt(output, map_modi.road_point_id_list, fmt = '%d', delimiter = ',', newline = '\n')
+    finally:
+      output.close()
+    
+    output = open('point_list.csv', 'w')
+    try:
+      np.savetxt(output, map_modi.road_point_list, fmt = '%f', delimiter = ',', newline = '\n')
+    finally:
+      output.close()
+  
+  print("{} points".format(len(map_modi.road_point_id_list)))
+
+=====================================================================================================
+# # -*- coding:utf-8 -*-
+
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+import PIL.Image as PIImg
+import scipy.spatial as spt
+import dxfgrabber as grb
+
+"""
+# 选择接续点的工具类
+"""
+
+
+class ModifyMap:
+  def __init__(self, fig):
+    self.fig = fig
+    self.ref_line = []
+    
+
+  def onPick(self, event):
+    mousevent = event.mouseevent
+    artist = event.artist
+    if mousevent.button == 1:
+      artist.set_color('k')
+      data = artist.get_data()
+      self.fig.canvas.draw()
+      print('data of artist is {}'.format(data))
+    else:
+      pass
+
+
+
+  def onButtonPress(self, event):
+    print('button')
+
+  def onKeyPress(self, event):
+    print('key')
+
+  def callBackConnect(self):
+    self.fig.canvas.mpl_connect('pick_event', self.onPick)
+    self.fig.canvas.mpl_connect('button_press_event', self.onButtonPress)
+    self.fig.canvas.mpl_connect('key_release_event', self.onKeyPress)
+
+  def callBackDisconnect(self):
+    self.fig.canvas.mpl_disconnect(self.onPick)
+    self.fig.canvas.mpl_disconnect(self.onButtonPress)
+    self.fig.canvas.mpl_disconnect(self.onKeyPress)
+
+class RefPointPara:
+  def __init__(self):
+    self.point = []
+    self.width = []
+    self.cuv = 0
+    self.gcuv = 0
+    self.s = 0
+  
+  def setWidth(self, width):
+    self.width = width
+  
+  def setCuv(self, cuv):
+    self.cuv = cuv
+  
+  def setGcuv(self, gcuv):
+    self.gcuv = gcuv
+  
+  def setS(self, s):
+    self.s = s
+  
+  def setPoint(self, point):
+    self.point = point
+
+"""##############################################
+"""
+if __name__ == "__main__":
+  img1 = PIImg.open("zhenjiang.bmp")
+  npimg1 = np.array(img1)
+  npimg1 = npimg1[-1:0:-1, :, :]
+  scale = 1 / 0.116
+  bias = [18.75, -0.75]
+  # xyz_map = (xyz_map - bias) * scale  # 针对镇江地图的偏移
+
+  # 准备绘图
+  fig = plt.figure()
+  ax = fig.add_subplot(111)
+  ax.set_title('modify map')
+
+  # 读取dxf文件
+  dxf_object = grb.readfile('map7.dxf')
+  
+  ref_seg_points = []
+  total_ref_seg_list = []
+  total_ref_seg_id_list = []
+
+  ref_seg_id = 0
+  ref_seg_line = []
+  ref_seg_dict = {}
+
+  for entity in dxf_object.entities:
+    if entity.layer == 'ref_line':
+      ref_seg_id = ref_seg_id + 1
+      ref_point = RefPointPara()
+      if entity.dxftype == 'LINE': # 对点进行离散化
+        start_point = (np.array([entity.start[0], entity.start[1]])/1000 - bias) * scale # dxf中为mm,且有偏移
+        end_point = (np.array([entity.end[0], entity.end[1]])/1000 - bias) * scale
+        # 离散化
+        distance = np.sqrt((end_point[0] - start_point[0]) ** 2 
+                          + (end_point[1] - start_point[1]) ** 2)
+        delta_x = (end_point[0] - start_point[0]) / distance
+        delta_y = (end_point[1] - start_point[1]) / distance
+        if delta_x==0 and delta_y == 0:
+          x = start_point[0]
+          y = start_point[1]
+        elif delta_x != 0 and delta_y == 0:
+          x = np.arange(start_point[0], end_point[0]+delta_x, delta_x)
+          y = np.ones(x.shape)*start_point[1]
+        elif delta_x == 0 and delta_y != 0:
+          y = np.arange(start_point[1], end_point[1]+delta_y, delta_y)
+          x = np.ones(y.shape)*start_point[0]
+        else:
+          x = np.arange(start_point[0], end_point[0], delta_x)
+          y = np.arange(start_point[1], end_point[1], delta_y)
+          list(x).append(end_point[0])
+          list(y).append(end_point[1])
+          # if x.shape != y.shape:
+          #   print('xy error!')
+        ax.plot(x, y, picker = 5)
+        # 计算参考线上点的数据
+        distance_s = 0
+        for i in range(len(x)):
+          ref_point.setPoint(tuple([x[i], y[i]]))
+          ref_point.setCuv(0)
+          ref_point.setGcuv(0)
+          ref_point.setWidth(tuple([-2, 2]))
+          distance_s = np.sqrt((x[i] - x[0]) ** 2 + (y[i] - y[0]) ** 2)
+          ref_seg_line.append(ref_point)
+          ref_seg_points.append(ref_point.point)
+        ref_seg_dict[ref_seg_id] = ref_seg_line
+        ref_seg_line.clear()
+      if entity.dxftype == 'ARC':
+        center_point = entity.center
+        radius = entity.radius
+        start_angle = entity.start_angle
+        end_angle = entity.end_angle
+        if end_angle == 0:
+          end_angle = 360
+        print('start = {}, end = {}'.format(start_angle, end_angle))
+        delta_angle = (end_angle - start_angle)/360 # 按照1度为基准转换
+        angle_array = np.arange(start_angle, end_angle+delta_angle, delta_angle)*3.1415926/180
+        x = ((np.cos(angle_array)*radius + center_point[0])/1000 - bias[0]) * scale
+        y = ((np.sin(angle_array)*radius + center_point[1])/1000 - bias[1]) * scale
+        ax.plot(x, y, picker = 5)
+        for i in range(len(x)):
+          distance_s = np.sqrt((x[i] - x[0]) ** 2 + (y[i] - y[0]) ** 2)
+          ref_point.setPoint(tuple([x[i], y[i]]))
+          ref_point.setCuv(1/radius)
+          ref_point.setGcuv(ref_point.cuv / distance_s)
+          ref_point.setWidth(tuple([-2, 2]))
+          ref_seg_line.append(ref_point)
+          ref_seg_points.append(ref_point.point)
+        ref_seg_dict[ref_seg_id] = ref_seg_line
+        ref_seg_line.clear
+      
+      total_ref_seg_id_list.append(ref_seg_id)
+      total_ref_seg_list.append(ref_seg_points)
+      ref_seg_points.clear
+      print('id = {}, dict len = {}, seg number ={}'.format(ref_seg_id, len(ref_seg_dict), len(total_ref_seg_list)))
+
+  # 显示并关联到选点程序
+  ax.imshow(npimg1, origin='lower')
+  ax.autoscale(False)
+  map_modi = ModifyMap(fig)
+  map_modi.callBackConnect()
+  plt.show()
+

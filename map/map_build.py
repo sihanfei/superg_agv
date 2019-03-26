@@ -137,10 +137,11 @@ class ModifyMap:
                 self.line_entity_dict[self.line_entity_id] = value
                 print("onKeyPress: line_entity: {} : {}".format(
                     self.line_entity_id, value.linetype))
-                jft.saveLineMapToJson(self.filename, 'w',
+                jft.saveLineMapToJson(self.filename, 'w+',
                                       self.line_entity_dict)
                 self.artist.set_color('w')
                 self.artist.set_marker('.')
+                self.artist.set_picker(0)
                 self.releaseAllData()
                 self.fig.canvas.draw()
                 pass
@@ -148,7 +149,7 @@ class ModifyMap:
                 if len(self.line_entity_dict) > 0:
                     print("onKeyPress: no start point: total_len = {}".format(
                         len(self.line_entity_dict)))
-                    jft.saveLineMapToJson(self.filename, 'w',
+                    jft.saveLineMapToJson(self.filename, 'w+',
                                           self.line_entity_dict)
 
         elif event.key == 'b':
@@ -199,199 +200,6 @@ class EntityProc():
                 return False
         else:
             return False
-
-
-def combineShowImgAndDXF(img_file, dxf_file):
-    pass
-
-
-def buildMapFromDXF(in_img_file, in_dxf_file, inout_entities_map_file,
-                    out_connect_map_file, out_ref_line_map_file):
-    img1 = PIImg.open(in_img_file)
-    npimg1 = np.array(img1)
-    npimg1 = npimg1[-1:0:-1, :, :]
-    scale = 1 / 0.116
-    bias = [18.75, -0.75]
-    # xyz_map = (xyz_map - bias) * scale  # 针对镇江地图的偏移
-
-    # 准备绘图
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-
-    # 读取dxf文件
-    dxf_object = grb.readfile(in_dxf_file)
-
-    total_ref_seg_dict = {}
-    ref_seg_id = 0
-
-    # 读取json文件,看是否entity已经存在过,
-    line_entities_json_file = inout_entities_map_file
-    entities_map_obj = jft.readLineMapFromJson(line_entities_json_file)
-    line_entities_dict = {}
-    drawn_entities_num = 0
-    if not entities_map_obj:
-        print('main: entities_map.json not exist!')
-    else:
-        entity_proc = EntityProc()
-        line_entities_dict = jft.getLineEntryDictFromJsonObj(entities_map_obj)
-        for _, key in enumerate(line_entities_dict):
-            line_entity = line_entities_dict[key]
-            print('main: getLineEntryDictFromJsonObj->{}:{}'.format(
-                key, line_entity.start))
-        pass
-    # 如果存在过, 则将相应的entity标注为已经选中,即将picker设置为0,颜色为白色
-    for entity in dxf_object.entities:
-        if entity.layer == 'ref_line':
-            ref_seg_id = ref_seg_id + 1
-            exist = False
-            line_entities_dict_key = []
-            if len(line_entities_dict) != 0:  # 判断entity是否已经存在了,
-                for _, key in enumerate(line_entities_dict):
-                    exist = entity_proc.testEntityEqual(
-                        entity, line_entities_dict[key], bias,
-                        scale)  # testEntityEqual有一定的问题,在arc的判断上
-                    if exist:
-                        drawn_entities_num = drawn_entities_num + 1
-                        line_entities_dict_key = key
-                        break
-            if exist:
-                print('main: get a entity -> {}'.format(ref_seg_id))
-            if entity.dxftype == 'LINE':  # 对点进行离散化
-                entity.start = (np.array(entity.start) / 1000 - bias) * scale
-                entity.end = (np.array(entity.end) / 1000 - bias) * scale
-                start_point = entity.start
-                end_point = entity.end
-                # x = (np.array([start_point[0], end_point[0]])/1000 - bias[0]) * scale
-                # y = (np.array([start_point[1], end_point[1]])/1000 - bias[1]) * scale
-                x = np.array([start_point[0], end_point[0]])
-                y = np.array([start_point[1], end_point[1]])
-                # # print('x={}'.format(x))
-                # 利用line的url属性传递entity的id信息
-                aline = ln.Line2D(
-                    x, y, url=str(ref_seg_id), picker=5, color='b', marker=',')
-                if exist:
-                    aline.set_color('w')
-                    aline.set_picker(0)
-                    drawPoint(line_entities_dict[line_entities_dict_key].start,
-                              'ro')
-                    drawPoint(line_entities_dict[line_entities_dict_key].end,
-                              'ko')
-                    print('main: get a entity line <--')
-                ax.add_line(aline)
-
-            if entity.dxftype == 'ARC':
-                entity.center = (
-                    np.array(entity.center) / 1000.0 - bias) * scale
-                center_point = entity.center
-
-                entity.radius = entity.radius / 1000.0 * scale
-                radius = entity.radius
-
-                entity.start_angle = entity.start_angle * np.pi / 180
-                entity.end_angle = entity.end_angle * np.pi / 180
-                if entity.start_angle > entity.end_angle:
-                    entity.start_angle = entity.start_angle - 2 * np.pi
-                start_angle = entity.start_angle
-                end_angle = entity.end_angle
-
-                delta_angle = (end_angle - start_angle) / (radius * 2 * np.pi
-                                                           )  # 按照弧长为基准转换
-                angle_array = np.arange(start_angle, end_angle, delta_angle)
-
-                x = (np.cos(angle_array) * radius + center_point[0])
-                y = (np.sin(angle_array) * radius + center_point[1])
-
-                aline = ln.Line2D(
-                    x, y, url=str(ref_seg_id), picker=5, color='b', marker=',')
-                if exist:
-                    aline.set_color('w')
-                    aline.set_picker(0)
-                    drawPoint(line_entities_dict[line_entities_dict_key].start,
-                              'ro')
-                    drawPoint(line_entities_dict[line_entities_dict_key].end,
-                              'ko')
-                    print('main: get a entity arc <--')
-                ax.add_line(aline)
-            # save to dict
-            total_ref_seg_dict[ref_seg_id] = entity
-    left_entities = ref_seg_id - drawn_entities_num  # 剩余还未处理的实体数量
-    # 显示并关联到选点程序
-    ax.set_title("1.pick a line.  2.pick start point.    3.'v' save json")
-    ax.set_xlabel(str(left_entities) + ' Entities left')
-    ax.imshow(npimg1, origin='lower')
-    ax.autoscale(False)
-    map_modi = ModifyMap(fig, total_ref_seg_dict, line_entities_dict,
-                         line_entities_json_file)
-    map_modi.callBackConnect()
-    plt.show()
-
-    # 计算离散点\
-    entities_map_obj = jft.readLineMapFromJson(line_entities_json_file)
-    entities_dict = {}
-    # read data from file
-    if not entities_map_obj:
-        print('main: file not exist!')
-    else:
-        for _, key in enumerate(entities_map_obj):
-            if key == 0:
-                print("main: {}:{}".format(key, entities_map_obj[key][0]))
-            entity = jft.LineEntity(
-                entities_map_obj[key][0], entities_map_obj[key][1],
-                entities_map_obj[key][2], entities_map_obj[key][3],
-                entities_map_obj[key][4], entities_map_obj[key][5])
-            entities_dict[key] = entity
-        # connectmap
-        calc_ref_line = mif.CalcRefLine()
-        connect_map_dict = calc_ref_line.makeConnectMap(entities_dict, 2)
-        # 保存连通图数据
-        fp = open(out_connect_map_file, 'w')
-        for _, key in enumerate(connect_map_dict):
-            value = connect_map_dict[key]
-            number = len(value)
-            fp.write(key)
-            fp.write(',')
-            fp.write(str(number))
-            for id in value:
-                fp.write(',')
-                fp.write(id)
-            fp.write('\n')
-        fp.close()
-        # ref_line
-        ref_line_dict = {}
-        for _, key in enumerate(entities_dict):
-            entity = entities_dict[key]
-            ref_line = calc_ref_line.getRefLine(entity)
-            ref_line_dict[key] = ref_line
-        # 保存参考点数据
-        #  point=[0.0, 0.0],
-        #  width=[2, 2],
-        #  cuv=0,
-        #  gcuv=0,
-        #  s=0,
-        #  theta=0):
-        fp = open(out_ref_line_map_file, 'w')
-        for _, key in enumerate(ref_line_dict):
-            ref_line = ref_line_dict[key]
-            for data in ref_line:
-                fp.write(key)
-                fp.write(',')
-                fp.write(str(data.point[0]))
-                fp.write(',')
-                fp.write(str(data.point[1]))
-                fp.write(',')
-                fp.write(str(data.s))
-                fp.write(',')
-                fp.write(str(data.theta))
-                fp.write(',')
-                fp.write(str(data.cuv))
-                fp.write(',')
-                fp.write(str(data.gcuv))
-                fp.write(',')
-                fp.write(str(data.width[0]))
-                fp.write(',')
-                fp.write(str(data.width[1]))
-                fp.write('\n')
-        fp.close()
 
 
 """##############################################
@@ -455,12 +263,14 @@ if __name__ == "__main__":
         line_entities_dict = jft.getLineEntryDictFromJsonObj(entities_map_obj)
         for _, key in enumerate(line_entities_dict):
             line_entity = line_entities_dict[key]
-            print('main: getLineEntryDictFromJsonObj->{}:{}'.format(
-                key, line_entity.start))
+            # print('main: getLineEntryDictFromJsonObj->{}:{}'.format(
+            #     key, line_entity.start))
         pass
     # 如果存在过, 则将相应的entity标注为已经选中,即将picker设置为0,颜色为白色
+    cnt_num = 0
     for entity in dxf_object.entities:
         if entity.layer == 'ref_line':
+            cnt_num = cnt_num + 1
             ref_seg_id = ref_seg_id + 1
             exist = False
             line_entities_dict_key = []
@@ -495,7 +305,7 @@ if __name__ == "__main__":
                               'ro')
                     drawPoint(line_entities_dict[line_entities_dict_key].end,
                               'ko')
-                    print('main: get a entity line <--')
+                    # print('main: get a entity line <--')
                 ax.add_line(aline)
 
             if entity.dxftype == 'ARC':
@@ -529,10 +339,11 @@ if __name__ == "__main__":
                               'ro')
                     drawPoint(line_entities_dict[line_entities_dict_key].end,
                               'ko')
-                    print('main: get a entity arc <--')
+                    # print('main: get a entity arc <--')
                 ax.add_line(aline)
             # save to dict
             total_ref_seg_dict[ref_seg_id] = entity
+    print('{} entities in ref_layer'.format(cnt_num))
     left_entities = ref_seg_id - drawn_entities_num  # 剩余还未处理的实体数量
     # 显示并关联到选点程序
     ax.set_title("1.pick a line.  2.pick start point.    3.'v' save json")
