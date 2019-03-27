@@ -221,7 +221,7 @@ def getLineEntryDictFromJsonObj(line_map_obj):
         if key == 0:
             print("main: {}:{}".format(key, line_map_obj[key][0]))
         entity = initLineEntryFromJsonObj(line_map_obj[key])
-        line_entities_dict[key] = entity
+        line_entities_dict[int(key)] = entity
     return line_entities_dict
 
 

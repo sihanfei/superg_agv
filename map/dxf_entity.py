@@ -40,6 +40,10 @@ class EntityinMap:  # dxf中实体对象
 
     # 将dxfentity转换为lineentity
     def toLineEntity(self):
+        """
+        change dxf_entity to line_entity
+        return : line_entity
+        """
         startp, endp = self.getEndPoints()
         length = self.getLength()
         if self.dxf_entity.dxftype == 'LINE':

@@ -168,28 +168,20 @@ if __name__ == "__main__":
     if len(out_ref_line_map_file) == 0:
         out_ref_line_map_file = '../data/map/zhenjiang/ref_line_map.json'
 
+    # 读入图像文件
     img1 = PIImg.open(in_img_file)
     npimg1 = np.array(img1)
     npimg1 = npimg1[-1:0:-1, :, :]
     scale = 1 / 0.116
     bias = [-18.75, +0.75]
-    # xyz_map = (xyz_map - bias) * scale  # 针对镇江地图的偏移
 
     # 准备绘图
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
-    # 读取dxf文件
-    dxf_object = grb.readfile(in_dxf_file)
-
-    total_ref_seg_dict = {}
-    ref_seg_id = 0
-
-    # 读取json文件,看是否entity已经存在过,
+    # 读取json文件,保存的数据为line_entity,用于判断是否entity已经存在过,
     line_entities_json_file = inout_entities_map_file
     entities_map_obj = jft.readLineMapFromJson(line_entities_json_file)
-    line_entities_dict = {}
-    drawn_entities_num = 0
     if not entities_map_obj:
         print('main: entities_map.json not exist!')
     else:
@@ -197,11 +189,13 @@ if __name__ == "__main__":
             entities_map_obj)
 
     # 读取dxf文件
-    dxf_object = grb.readfile('../data/map/zhenjiang/zhenjiang.dxf')
+    dxf_object = grb.readfile(in_dxf_file)
 
-    # 准备根据dxf文件进行绘图
-    num = 0
-    board_points = []
+    # 准备根据dxf文件进行绘图，仅仅把需要处理的entities传入map类中
+    # connect_map因为需要整个地图，所以还是等退出后再计算
+    # ref_line地图数据可以直接在绘图时生成，等退出后再存储
+    num = 0  # 用于作为字典的key
+    board_points = []  # 用于存放边界离散点
     procing_line_entities_dict = {}
     for entity in dxf_object.entities:
         if entity.layer == 'ref_line':
@@ -210,14 +204,14 @@ if __name__ == "__main__":
             # 先简单考虑:对于同一个dxf文件,entities的顺序是确定的,因此可以直接通过num(也就是ID)来比对
             if len(saved_line_entities_dict) != 0:
                 if entity_in_map.isEqualtoLineEntity(
-                        saved_line_entities_dict[str(num)]):
+                        saved_line_entities_dict[num]):
                     line = entity_in_map.draw(color='w', picker=0)
                 else:
                     line = entity_in_map.draw(color='k', picker=5)
                     procing_line_entities_dict[num] = entity_in_map.dxf_entity
             else:
                 line = entity_in_map.draw(color='k', picker=5)
-                procing_line_entities_dict[num] = entity_in_map.dxf_entity
+                procing_line_entities_dict[num] = entity_in_map.toLineEntity()
 
             ax.add_line(line)
 
