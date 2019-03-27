@@ -22,6 +22,27 @@ class LineEntity:
         self.radius = radius
         self.length = length
 
+    def setLineType(self, line_type):
+        self.linetype = line_type
+
+    def setStart(self, start):
+        self.start = start
+
+    def setEnd(self, end):
+        self.end = end
+
+    def setAngle(self, angle):
+        self.angle = angle
+
+    def setCenter(self, center):
+        self.center = center
+
+    def setRadius(self, radius):
+        self.radius = radius
+
+    def setLength(self, length):
+        self.length = length
+
 
 class RefPointPara:
     """
@@ -174,7 +195,7 @@ def readFromJson(filename, decoder):
         data = pf.read()
         obj = json.loads(data, encoding=decoder)
     except FileNotFoundError:
-        return False
+        return []
     pf.close()
     return obj
 
@@ -185,6 +206,8 @@ def readRefPointParaDictFromJson(filename):
 
 
 def initLineEntryFromJsonObj(JsonObj):
+    # entity = LineEntity(JsonObj[0], JsonObj[1], JsonObj[2], JsonObj[3],
+    #                     JsonObj[4], JsonObj[5], JsonObj[6])
     entity = LineEntity(JsonObj[0], JsonObj[1], JsonObj[2], JsonObj[3],
                         JsonObj[4], JsonObj[5])
 

@@ -22,6 +22,7 @@ import dxfgrabber as grb
 
 import JsonFormat as jft
 import map_interface as mif
+import dxf_entity
 
 
 def calcDistance(p1, p2):
@@ -172,8 +173,8 @@ class EntityProc():
     def testEntityEqual(self, dxf_entity, line_entity, bias, scale):
         if dxf_entity.dxftype == line_entity.linetype:
             if dxf_entity.dxftype == "LINE":
-                dxf_start = (np.array(dxf_entity.start) / 1000 - bias) * scale
-                dxf_end = (np.array(dxf_entity.end) / 1000 - bias) * scale
+                dxf_start = (np.array(dxf_entity.start) / 1000 + bias) * scale
+                dxf_end = (np.array(dxf_entity.end) / 1000 + bias) * scale
                 d0 = calcDistance(dxf_start, line_entity.start)
                 d1 = calcDistance(dxf_end, line_entity.end)
                 d2 = calcDistance(dxf_start, line_entity.end)
@@ -186,7 +187,7 @@ class EntityProc():
                     return False
             elif dxf_entity.dxftype == "ARC":
                 dxf_center = (
-                    np.array(dxf_entity.center) / 1000 - bias) * scale
+                    np.array(dxf_entity.center) / 1000 + bias) * scale
                 dxf_radius = np.array(dxf_entity.radius) / 1000 * scale
                 d0 = calcDistance(dxf_center, line_entity.center)
                 if (d0 == 0) and ((
@@ -238,7 +239,7 @@ if __name__ == "__main__":
     npimg1 = np.array(img1)
     npimg1 = npimg1[-1:0:-1, :, :]
     scale = 1 / 0.116
-    bias = [18.75, -0.75]
+    bias = [-18.75, +0.75]
     # xyz_map = (xyz_map - bias) * scale  # 针对镇江地图的偏移
 
     # 准备绘图
@@ -266,16 +267,27 @@ if __name__ == "__main__":
             # print('main: getLineEntryDictFromJsonObj->{}:{}'.format(
             #     key, line_entity.start))
         pass
+
     # 如果存在过, 则将相应的entity标注为已经选中,即将picker设置为0,颜色为白色
     cnt_num = 0
+    board_points = []
     for entity in dxf_object.entities:
+        if entity.layer == 'board':
+            entity_in_map = dxf_entity.EntityinMap(entity, scale, bias)
+            if entity_in_map.getType() == 'ARC':
+                print('main: entity_in_map.center:{}'.format(
+                    entity_in_map.dxf_entity.center))
+            board_line = entity_in_map.draw(color='g')
+            ax.add_line(board_line)
+            points = entity_in_map.scatterGPSPoints()
+            board_points.extend(points)
         if entity.layer == 'ref_line':
             cnt_num = cnt_num + 1
             ref_seg_id = ref_seg_id + 1
             exist = False
             line_entities_dict_key = []
-            if len(line_entities_dict) != 0:  # 判断entity是否已经存在了,
-                for _, key in enumerate(line_entities_dict):
+            if len(line_entities_dict) != 0:
+                for _, key in enumerate(line_entities_dict):  # 判断entity是否已经存在了
                     exist = entity_proc.testEntityEqual(
                         entity, line_entities_dict[key], bias,
                         scale)  # testEntityEqual有一定的问题,在arc的判断上
@@ -286,8 +298,8 @@ if __name__ == "__main__":
             if exist:
                 print('main: get a entity -> {}'.format(ref_seg_id))
             if entity.dxftype == 'LINE':  # 对点进行离散化
-                entity.start = (np.array(entity.start) / 1000 - bias) * scale
-                entity.end = (np.array(entity.end) / 1000 - bias) * scale
+                entity.start = (np.array(entity.start) / 1000 + bias) * scale
+                entity.end = (np.array(entity.end) / 1000 + bias) * scale
                 start_point = entity.start
                 end_point = entity.end
                 # x = (np.array([start_point[0], end_point[0]])/1000 - bias[0]) * scale
@@ -310,7 +322,7 @@ if __name__ == "__main__":
 
             if entity.dxftype == 'ARC':
                 entity.center = (
-                    np.array(entity.center) / 1000.0 - bias) * scale
+                    np.array(entity.center) / 1000.0 + bias) * scale
                 center_point = entity.center
 
                 entity.radius = entity.radius / 1000.0 * scale

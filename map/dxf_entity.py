@@ -8,6 +8,8 @@ import matplotlib.lines as ln
 import PIL.Image as PIImg
 import dxfgrabber as grb
 import copy as cp
+import scipy.spatial as spt
+import json
 
 
 class EntityinMap:  # dxf中实体对象
@@ -140,34 +142,56 @@ class EntityinMap:  # dxf中实体对象
         elif self.dxf_entity.dxftype == 'LINE':
             self.dxf_entity.start, self.dxf_entity.end = self.dxf_entity.end, self.dxf_entity.start
 
-    def isEqual(self, entity):
-        if self.dxf_entity.dxftype != entity.dxftype:
+    def isEqualtoLineEntity(self, line_entity):
+        if self.dxf_entity.dxftype != line_entity.linetype:
             return False
         else:
-            if entity.dxftype == 'LINE':
+            if line_entity.linetype == 'LINE':
                 d0 = gp.calcTwoPointsDistance(self.dxf_entity.start,
-                                              entity.start)
-                d1 = gp.calcTwoPointsDistance(self.dxf_entity.end, entity.end)
+                                              line_entity.start)
+                d1 = gp.calcTwoPointsDistance(self.dxf_entity.end,
+                                              line_entity.end)
                 d2 = gp.calcTwoPointsDistance(self.dxf_entity.start,
-                                              entity.end)
+                                              line_entity.end)
                 d3 = gp.calcTwoPointsDistance(self.dxf_entity.end,
-                                              entity.start)
+                                              line_entity.start)
                 if (d0 == d2 and d1 == d3) or (d0 == d3 and d1 == d2):
                     return True
                 else:
                     return False
-            elif entity.dxftype == 'ARC':
+            elif line_entity.linetype == 'ARC':
                 dxf_center = np.array(self.dxf_entity.center)
                 dxf_radius = np.array(self.dxf_entity.radius)
-                d0 = gp.calcTwoPointsDistance(dxf_center, entity.center)
+                d0 = gp.calcTwoPointsDistance(dxf_center, line_entity.center)
                 if (d0 == 0) and ((
-                    (dxf_radius - entity.radius) / dxf_radius) == 0):
+                    (dxf_radius - line_entity.radius) / dxf_radius) == 0):
                     return True
                 else:
                     return False
                 pass
             else:
                 return False
+
+    def getType(self):
+        return self.dxf_entity.dxftype
+
+    def getStart(self):
+        return self.dxf_entity.start
+
+    def getEnd(self):
+        return self.dxf_entity.end
+
+    def getCenter(self):
+        return self.dxf_entity.center
+
+    def getStartAngle(self):
+        return self.dxf_entity.start_angle
+
+    def getEndAngle(self):
+        return self.dxf_entity.end_angle
+
+    def getRadius(self):
+        return self.dxf_entity.radius
 
 
 if __name__ == "__main__":
@@ -181,8 +205,8 @@ if __name__ == "__main__":
     # 准备绘图
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.set_xlim(0, 1000)
-    ax.set_ylim(0, 1000)
+    ax.set_xlim(-10, 1000)
+    ax.set_ylim(-10, 1000)
     # ax.imshow(npimg1, origin='lower', zorder=0)
     ax.autoscale(False)
 
@@ -190,11 +214,47 @@ if __name__ == "__main__":
     dxf_object = grb.readfile('../data/map/zhenjiang/zhenjiang.dxf')
 
     num = 0
+    board_points = []
     for entity in dxf_object.entities:
         if entity.layer == 'ref_line':
             num = num + 1
             entity_in_map = EntityinMap(entity, scale, bias)
             line = entity_in_map.draw(color='r')
             ax.add_line(line)
-    print('total entities is {}'.format(num))
+        if entity.layer == 'board':
+            entity_in_map = EntityinMap(entity, scale, bias)
+            if entity_in_map.getType() == 'ARC':
+                print('main: entity_in_map.center:{}'.format(
+                    entity_in_map.dxf_entity.center))
+            board_line = entity_in_map.draw(color='g')
+            ax.add_line(board_line)
+            points = entity_in_map.scatterGPSPoints()
+            board_points.extend(points)
+    board_points_tree = spt.KDTree(board_points)
+    data = input('x, y = ')
+    value = data.split(',')
+    if len(value) == 2:
+        point = [int(num) for num in value]
+    else:
+        point = [0, 0]
+
+    width, points = gp.getWidthinP(point, 8 * scale, np.pi / 4,
+                                   board_points_tree)
+    print('width, points = {}, {}'.format(width, points))
+
+    pline = ln.Line2D([points[0][0], points[1][0]],
+                      [points[0][1], points[1][1]],
+                      color='r')
+    ax.add_line(pline)
+
+    pline = ln.Line2D([point[0]], [point[1]], marker='o')
+    ax.add_line(pline)
+    near_points = board_points_tree.query_ball_point(point, 8 * scale)
+
+    # print('points get {}'.format(board_points_tree.data[near_points]))
+    for ind in near_points:
+        value = board_points_tree.data[ind]
+        pline = ln.Line2D([value[0]], [value[1]], marker='*', color='k')
+        ax.add_line(pline)
+
     plt.show()
