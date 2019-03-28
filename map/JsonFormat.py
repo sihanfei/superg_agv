@@ -3,51 +3,19 @@
 # 用于实现json文件的存储与读取
 import json
 import numpy as np
-
-
-class LineEntity:
-    def __init__(self,
-                 linetype='LINE',
-                 start=[],
-                 end=[],
-                 angle=[],
-                 center=[],
-                 radius=0,
-                 length=0):
-        self.linetype = linetype
-        self.start = list(start)
-        self.end = list(end)
-        self.angle = list(angle)
-        self.center = list(center)
-        self.radius = radius
-        self.length = length
-
-    def setLineType(self, line_type):
-        self.linetype = line_type
-
-    def setStart(self, start):
-        self.start = start
-
-    def setEnd(self, end):
-        self.end = end
-
-    def setAngle(self, angle):
-        self.angle = angle
-
-    def setCenter(self, center):
-        self.center = center
-
-    def setRadius(self, radius):
-        self.radius = radius
-
-    def setLength(self, length):
-        self.length = length
+from line_entity import LineEntity
 
 
 class RefPointPara:
     """
-  参考点属性结构体
-  """
+    参考点属性结构体
+    1. point
+    2. width
+    3. cuv
+    4. gcuv
+    5. s
+    6. theta
+    """
 
     def __init__(self,
                  point=[0.0, 0.0],
@@ -107,8 +75,8 @@ class RefPointPara:
 class LineEntityEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, LineEntity):
-            return (obj.linetype, obj.start, obj.end, obj.angle, obj.center,
-                    obj.radius)
+            return (obj.linetype, obj.start, obj.end, obj.angles, obj.center,
+                    obj.radius, obj.length)
         return json.JSONEncoder.default(self, obj)
 
 
@@ -208,9 +176,14 @@ def readRefPointParaDictFromJson(filename):
 def initLineEntryFromJsonObj(JsonObj):
     # entity = LineEntity(JsonObj[0], JsonObj[1], JsonObj[2], JsonObj[3],
     #                     JsonObj[4], JsonObj[5], JsonObj[6])
-    entity = LineEntity(JsonObj[0], JsonObj[1], JsonObj[2], JsonObj[3],
-                        JsonObj[4], JsonObj[5])
-
+    entity = LineEntity()
+    entity.linetype = JsonObj[0]
+    entity.start = JsonObj[1]
+    entity.end = JsonObj[2]
+    entity.angles = JsonObj[3]
+    entity.center = JsonObj[4]
+    entity.radius = JsonObj[5]
+    entity.length = JsonObj[6]
     return entity
 
 

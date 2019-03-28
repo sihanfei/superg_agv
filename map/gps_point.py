@@ -30,18 +30,34 @@ class GPSPoint():
 
     @classmethod
     def getWidthinP(cls, p, radius, theta, tree):
-        points = tree.data[tree.query_ball_point(p, radius)]
+        """
+        计算有向线段中的点在法线方向上,是否在radius范围存在与tree的相交点:
+        """
         angle_left = theta + np.pi / 2
+        if angle_left > np.pi:
+            angle_left = angle_left - 2 * np.pi
+        elif angle_left < -np.pi:
+            angle_left = angle_left + 2 * np.pi
         angle_left_diff = np.pi / 2
+
         angle_right = theta - np.pi / 2
+        if angle_right > np.pi:
+            angle_right = angle_right - 2 * np.pi
+        elif angle_right < -np.pi:
+            angle_right = angle_right + 2 * np.pi
         angle_right_diff = np.pi / 2
+        # print('切线方向:{}, 法线方向:左:{}, 右:{}'.format(
+        #     theta, angle_left * 180 / np.pi, angle_right * 180 / np.pi))
+
         left_width = 0
         right_width = 0
         left_point = []
         right_point = []
+
+        points = tree.data[tree.query_ball_point(p, radius)]  # 在tree中寻找点
         if len(points) == 0:
             print('no points found')
-            return [radius, radius], [0, 0]
+            return [radius, radius], [[0, 0], [0, 0]]
         else:
             for pe in points:
                 angle = GPSPoint.getDiAngle(p, pe)
@@ -53,17 +69,16 @@ class GPSPoint():
                     angle_right_diff = np.abs(angle - angle_right)
                     right_width = GPSPoint.calcTwoPointsDistance(p, pe)
                     right_point = pe
-            print('ducing:{}'.format([[left_width, right_width],
-                                      [angle_left, angle_right],
-                                      [left_point, right_point]]))
-            if angle_left_diff >= np.pi / 2:  # 实际没有找到左侧点
+            if angle_left_diff > 1 / radius:  # 实际没有找到左侧点, 这里也可以修改为 diff<(1/radius),因为我们的离散是按照1m执行的,最差的情况就是相距1m
                 left_width = radius
-                left_point = []
-            if angle_right_diff >= np.pi / 2:
+                left_point = [0, 0]
+            if angle_right_diff > 1 / radius:
                 right_width = radius
-                right_point = []
+                right_point = [0, 0]
             return [left_width, right_width], [left_point, right_point]
 
 
 if __name__ == "__main__":
-    pass
+    ps = [0, 0]
+    pe = [-1.73, -1]
+    print(GPSPoint.getDiAngle(ps, pe) * 180 / np.pi)
