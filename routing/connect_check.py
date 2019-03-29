@@ -137,12 +137,12 @@ class routeMap:
 
 
 if __name__ == "__main__":
-    connect_map_file = "../data/map/zhenjiang/connect_map.json"
+    connect_map_file = "../data/map/shenzhen/shenzhen_connect_map.json"
     connect_map_dict = getConnectMapFromJson(connect_map_file)
     for _, key in enumerate(connect_map_dict):
         print('main:{}:{}'.format(key, connect_map_dict[key]))
 
-    ref_line_map_file = "../data/map/zhenjiang/ref_line_map.json"
+    ref_line_map_file = "../data/map/shenzhen/shenzhen_ref_line_map.json"
     ref_line_length_map_dict = getRefLineLengthMapFromJson(ref_line_map_file)
     for _, key in enumerate(ref_line_length_map_dict):
         print('main:ref_line->{}:{}'.format(key,
@@ -161,7 +161,7 @@ if __name__ == "__main__":
                 weight='length')
         print('road ID:{}'.format(key))
 
-    img1 = PIImg.open("../data/map/zhenjiang/zhenjiang.bmp")
+    img1 = PIImg.open("../data/map/shenzhen/shenzhen.bmp")
     npimg1 = np.array(img1)
     npimg1 = npimg1[-1:0:-1, :, :]
     # 准备绘图
@@ -199,3 +199,5 @@ if __name__ == "__main__":
             print('NO path')
     else:
         print('node not in map')
+
+    plt.show()

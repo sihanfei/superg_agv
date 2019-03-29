@@ -133,8 +133,8 @@ class LineEntity:
         if self.linetype == 'LINE':
             sp, ep = self.start, self.end
             length = self.length
-            delta_x = (ep[0] - sp[0]) / length
-            delta_y = (ep[1] - sp[1]) / length
+            delta_x = (ep[0] - sp[0]) / length / 2
+            delta_y = (ep[1] - sp[1]) / length / 2
             if delta_y == 0:
                 xlist = np.arange(sp[0], ep[0], delta_x)
                 ylist = np.ones(xlist.shape) * sp[1]
@@ -149,7 +149,8 @@ class LineEntity:
             #     (self.start, self.end, self.length)))
         elif self.linetype == 'ARC':
             delta_angle = (self.angles[1] - self.angles[0]) / np.abs(
-                self.angles[1] - self.angles[0]) / self.radius  # 按照弧长1m为基准转换
+                self.angles[1] -
+                self.angles[0]) / self.radius / 2  # 按照弧长1m为基准转换
             angle_list = np.arange(self.angles[0], self.angles[1], delta_angle)
             # points = np.array([np.cos(angle_list),
             #           np.sin(angle_list)

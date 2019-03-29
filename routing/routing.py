@@ -45,8 +45,9 @@ def doPathSearch(data, DiGraphic):
 
     if src_ID == end_ID:
         status = str(0xAA) + str(0xAA) + ',' + str(carID) + ',' + str(
-            1) + ',' + str(2) + str(src_ID) + ',' + str(end_ID) + ',' + str(
-                0xCC) + str(0xCC)
+            1) + ',' + str(2) + ',' + str(src_ID) + ',' + str(
+                end_ID) + ',' + str(0xCC) + str(0xCC)
+        return status
 
     try:
         length = nx.shortest_path_length(
@@ -205,12 +206,12 @@ class routeMap:
 
 
 if __name__ == "__main__":
-    connect_map_file = "../data/map/zhenjiang/connect_map.json"
+    connect_map_file = "../data/map/connect_map.json"
     connect_map_dict = getConnectMapFromJson(connect_map_file)
     for _, key in enumerate(connect_map_dict):
         print('main:{}:{}'.format(key, connect_map_dict[key]))
 
-    ref_line_map_file = "../data/map/zhenjiang/ref_line_map.json"
+    ref_line_map_file = "../data/map/ref_line_map.json"
     ref_line_length_map_dict = getRefLineLengthMapFromJson(ref_line_map_file)
     for _, key in enumerate(ref_line_length_map_dict):
         print('main:ref_line->{}:{}'.format(key,

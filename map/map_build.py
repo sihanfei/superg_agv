@@ -77,7 +77,7 @@ def saveRefLineToFile(out_ref_line_map_file, ref_line_dict):
 
 def saveConnectMapTofile(out_connect_map_file, connect_map_dict):
     # 保存连通图数据
-    fp = open(out_connect_map_file, 'w')
+    fp = open(out_connect_map_file, 'w+')
     for _, key in enumerate(connect_map_dict):
         value = connect_map_dict[key]
         number = len(value)
@@ -92,9 +92,9 @@ def saveConnectMapTofile(out_connect_map_file, connect_map_dict):
 
 
 if __name__ == "__main__":
-    file_dir = input('请输入数据文件所在地址与名称,如:../data/map/zhenjiang/zhenjiang:')
+    file_dir = input('请输入数据文件所在地址与名称,如:../data/map/shenzhen/shenzhen:')
     if len(file_dir) == 0:
-        file_dir = '../data/map/zhenjiang/zhenjiang'
+        file_dir = '../data/map/shenzhen/shenzhen'
 
     in_img_file = input('请输入图像文件名称,回车默认为:{}.bmp. [n]表示不需读入:'.format(file_dir))
     if len(in_img_file) == 0:
@@ -121,15 +121,14 @@ if __name__ == "__main__":
     # 准备绘图
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.set_xlim(-10, 1000)
-    ax.set_ylim(-10, 1000)
+
     # 读入图像文件
     if in_img_file:
         img1 = PIImg.open(in_img_file)
         npimg1 = np.array(img1)
         npimg1 = npimg1[-1:0:-1, :, :]
-        scale = 1 / 0.116
-        bias = [-18.75, +0.75]
+        scale = 1.08
+        bias = [0, 0]
         ax.imshow(npimg1, origin='lower')
         ax.autoscale(False)
     else:
@@ -182,8 +181,7 @@ if __name__ == "__main__":
             # if entity_in_map.getType() == 'ARC':
             #     print('main: entity_in_map.center:{}'.format(
             #         entity_in_map.dxf_entity.center))
-            board_line = entity_in_map.draw(
-                color='g', url='board', picker='5', marker='.')
+            board_line = entity_in_map.draw(color='g', url='board', picker='5')
             ax.add_line(board_line)
             points = entity_in_map.scatterGPSPoints()
             board_points.extend(points)
@@ -193,7 +191,7 @@ if __name__ == "__main__":
     ax.set_title('1.select_ref 2.select_start 3.select_board 4."v" to save')
 
     # 调用EntityMapFig
-    zhenjiang_map = EntityMapFig(fig, procing_line_entities_dict)
+    zhenjiang_map = EntityMapFig(fig, procing_line_entities_dict, scale)
     zhenjiang_map.callBackConnect()
     plt.show()
     zhenjiang_map.callBackDisconnect()
@@ -224,5 +222,5 @@ if __name__ == "__main__":
             out_connect_map_file = file_dir + '_connect_map.json'
         else:
             out_connect_map_file = file_dir + out_connect_map_file
-        connect_map_dict = getConnectMap(saved_line_entities_dict, 2 * scale)
+        connect_map_dict = getConnectMap(saved_line_entities_dict, 1.5 * scale)
         saveConnectMapTofile(out_connect_map_file, connect_map_dict)

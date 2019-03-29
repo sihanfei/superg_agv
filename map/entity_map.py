@@ -12,6 +12,8 @@ from line_entity import LineEntity
 import scipy.spatial as spt
 from gps_point import GPSPoint
 
+total_step = 10
+
 
 class EntityMapFig:
     """
@@ -20,10 +22,16 @@ class EntityMapFig:
     3.将处理完成的entities存入done_line_entity_dict
     """
 
-    def __init__(self, fig, entity_dict):
+    def __init__(self, fig, entity_dict, scale):
         self.fig = fig
         self.ax = self.fig.gca()
+        self.xlim_l, self.xlim_r = self.ax.get_xlim()
+        self.ylim_l, self.ylim_r = self.ax.get_ylim()
+        self.step = total_step
+        self.xstep = (self.xlim_r - self.xlim_l) / (2 * self.step)
+        self.ystep = (self.ylim_r - self.ylim_l) / (2 * self.step)
         self.entity_dict = entity_dict
+        self.scale = scale
         #
         self.board_artist = []
         #
@@ -110,6 +118,41 @@ class EntityMapFig:
                     #
                     self.fig.canvas.draw()
 
+    def OnMouseWheel(self, event):
+        x_center = event.xdata
+        y_center = event.ydata
+        if event.button == 'up':
+            if self.step > 0:
+                self.step = self.step - 1
+            if self.step != 0:
+                self.ax.set_xlim(
+                    max(x_center - self.step * self.xstep, self.xlim_l),
+                    min(x_center + self.step * self.xstep, self.xlim_r))
+                self.ax.set_ylim(
+                    max(y_center - self.step * self.ystep, self.ylim_l),
+                    min(y_center + self.step * self.ystep, self.ylim_r))
+            else:
+                self.ax.set_xlim(x_center - 10 * scale,
+                                 x_center + 10 * scale)  # 这里会有问题
+                self.ax.set_ylim(y_center - 10 * scale,
+                                 y_center + 10 * scale)  # 先这么处理
+
+        else:
+            if self.step < total_step:
+                self.step = self.step + 1
+            if self.step != total_step:
+                self.ax.set_xlim(
+                    max(x_center - self.step * self.xstep, self.xlim_l),
+                    min(x_center + self.step * self.xstep, self.xlim_r))
+                self.ax.set_ylim(
+                    max(y_center - self.step * self.ystep, self.ylim_l),
+                    min(y_center + self.step * self.ystep, self.ylim_r))
+            else:
+                self.ax.set_xlim(self.xlim_l, self.xlim_r)
+                self.ax.set_ylim(self.ylim_l, self.ylim_r)
+            pass
+        self.fig.canvas.draw()
+
     def releaseAllData(self):
         pass
         self.line_entity_id = 0
@@ -155,6 +198,7 @@ class EntityMapFig:
         self.fig.canvas.mpl_connect('pick_event', self.onPick)
         self.fig.canvas.mpl_connect('button_press_event', self.onButtonPress)
         self.fig.canvas.mpl_connect('key_release_event', self.onKeyPress)
+        self.fig.canvas.mpl_connect('scroll_event', self.OnMouseWheel)
 
     def callBackDisconnect(self):
         self.fig.canvas.mpl_disconnect(self.onPick)
@@ -178,13 +222,11 @@ class EntityMapFig:
                 # print('getRefLine: width:{}'.format(ref_point.width))
                 ref_line.append(ref_point)
         elif line_entity.linetype == 'ARC':
+            points_num = len(points)
             delta_angle = (
-                line_entity.angles[1] - line_entity.angles[0]) / np.abs(
-                    line_entity.angles[1] -
-                    line_entity.angles[0]) / line_entity.radius  # 按照弧长1m为基准转换
+                line_entity.angles[1] - line_entity.angles[0]) / points_num
             angle_list = np.arange(line_entity.angles[0],
-                                   line_entity.angles[1] + delta_angle,
-                                   delta_angle)
+                                   line_entity.angles[1], delta_angle)
             for i in range(1, len(points)):
                 ref_point = jft.RefPointPara()
                 ref_point.point = points[i - 1]
@@ -205,9 +247,9 @@ class EntityMapFig:
 
 
 if __name__ == "__main__":
-    file_dir = input('请输入数据文件所在地址与名称,如:../data/map/zhenjiang/zhenjiang:')
+    file_dir = input('请输入数据文件所在地址与名称,如:../data/map/shenzhen/shenzhen:')
     if len(file_dir) == 0:
-        file_dir = '../data/map/zhenjiang/zhenjiang'
+        file_dir = '../data/map/shenzhen/shenzhen'
 
     in_img_file = input('请输入图像文件名称,回车默认为:{}.bmp. [n]表示不需读入:'.format(file_dir))
     if len(in_img_file) == 0:
@@ -240,8 +282,8 @@ if __name__ == "__main__":
         img1 = PIImg.open(in_img_file)
         npimg1 = np.array(img1)
         npimg1 = npimg1[-1:0:-1, :, :]
-        scale = 1 / 0.116
-        bias = [-18.75, +0.75]
+        scale = 1.08
+        bias = [-33, +460]
         ax.imshow(npimg1, origin='lower')
         ax.autoscale(False)
     else:
@@ -294,8 +336,7 @@ if __name__ == "__main__":
             # if entity_in_map.getType() == 'ARC':
             #     print('main: entity_in_map.center:{}'.format(
             #         entity_in_map.dxf_entity.center))
-            board_line = entity_in_map.draw(
-                color='g', url='board', picker='5', marker='.')
+            board_line = entity_in_map.draw(color='g', url='board', picker='5')
             ax.add_line(board_line)
             points = entity_in_map.scatterGPSPoints()
             board_points.extend(points)
@@ -305,7 +346,7 @@ if __name__ == "__main__":
     ax.set_title('1.select_ref 2.select_start 3.select_board 4."v" to save')
 
     # 调用EntityMapFig
-    zhenjiang_map = EntityMapFig(fig, procing_line_entities_dict)
+    zhenjiang_map = EntityMapFig(fig, procing_line_entities_dict, scale)
     zhenjiang_map.callBackConnect()
     plt.show()
     zhenjiang_map.callBackDisconnect()
