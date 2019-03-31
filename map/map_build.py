@@ -158,7 +158,7 @@ if __name__ == "__main__":
     # ref_line地图数据可以直接在绘图时生成，等退出后再存储
     num = 0  # 用于作为字典的key
     board_points = []  # 用于存放边界离散点
-    procing_line_entities_dict = {}  # 需要处理的line_entities
+    total_line_entities_dict = {}  # 需要处理的line_entities
     # 查找所有dxf_entities
     for entity in dxf_object.entities:
         if entity.layer == 'ref_line':
@@ -167,12 +167,12 @@ if __name__ == "__main__":
             entity_in_map.initFromDXF(entity, scale, bias)  #
             # 先简单考虑:对于同一个dxf文件,entities的顺序是确定的,因此可以直接通过num(也就是ID)来比对
             if num in saved_num_list:
-                line = entity_in_map.draw(color='w', picker=0)
+                line = entity_in_map.draw(color='k', picker=0, url=num)
                 # procing_line_entities_dict[
                 #     num] = entity_in_map  # 传递的是line_entity,为了统计全部的entities,先把数据传进去
             else:
                 line = entity_in_map.draw(color='b', picker=5, url=num)
-                procing_line_entities_dict[num] = entity_in_map
+            total_line_entities_dict[num] = entity_in_map
             ax.add_line(line)
 
         if entity.layer == 'board':
@@ -187,11 +187,11 @@ if __name__ == "__main__":
             board_points.extend(points)
 
     ax.set_xlabel('{}/{} entities'.format(
-        len(procing_line_entities_dict), num))
+        len(total_line_entities_dict) - saved_entities_num, num))
     ax.set_title('1.select_ref 2.select_start 3.select_board 4."v" to save')
 
     # 调用EntityMapFig
-    zhenjiang_map = EntityMapFig(fig, procing_line_entities_dict, scale)
+    zhenjiang_map = EntityMapFig(fig, total_line_entities_dict, scale)
     zhenjiang_map.callBackConnect()
     plt.show()
     zhenjiang_map.callBackDisconnect()
@@ -215,12 +215,12 @@ if __name__ == "__main__":
         saveRefLineToFile(out_ref_line_map_file, zhenjiang_map.ref_line_dict)
 
     # 确认全部entity都已经连接
-    if len(saved_line_entities_dict) == num:
-        out_connect_map_file = input(
-            '请输入有向连通地图文件名称,回车默认为:{}_connect_map.json'.format(file_dir))
-        if len(out_connect_map_file) == 0:
-            out_connect_map_file = file_dir + '_connect_map.json'
-        else:
-            out_connect_map_file = file_dir + out_connect_map_file
-        connect_map_dict = getConnectMap(saved_line_entities_dict, 1.5 * scale)
-        saveConnectMapTofile(out_connect_map_file, connect_map_dict)
+    # if len(saved_line_entities_dict) == num:
+    #     out_connect_map_file = input(
+    #         '请输入有向连通地图文件名称,回车默认为:{}_connect_map.json'.format(file_dir))
+    #     if len(out_connect_map_file) == 0:
+    #         out_connect_map_file = file_dir + '_connect_map.json'
+    #     else:
+    #         out_connect_map_file = file_dir + out_connect_map_file
+    #     connect_map_dict = getConnectMap(saved_line_entities_dict, 1.5 * scale)
+    #     saveConnectMapTofile(out_connect_map_file, connect_map_dict)

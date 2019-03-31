@@ -22,6 +22,8 @@ class LineEntity:
         self.center = []
         self.radius = []
         self.length = []
+        self.scale = 0
+        self.bias = [0, 0]
 
     def setLineType(self, line_type):
         self.linetype = line_type
@@ -136,22 +138,24 @@ class LineEntity:
             delta_x = (ep[0] - sp[0]) / length / 2
             delta_y = (ep[1] - sp[1]) / length / 2
             if delta_y == 0:
-                xlist = np.arange(sp[0], ep[0], delta_x)
+                xlist = np.arange(sp[0], ep[0] + delta_x, delta_x)
                 ylist = np.ones(xlist.shape) * sp[1]
             elif delta_x == 0:
-                ylist = np.arange(sp[1], ep[1], delta_y)
+                ylist = np.arange(sp[1], ep[1] + delta_y, delta_y)
                 xlist = np.ones(ylist.shape) * sp[0]
             else:
-                xlist = np.arange(sp[0], ep[0], delta_x)
-                ylist = np.arange(sp[1], ep[1], delta_y)
+                xlist = np.arange(sp[0], ep[0] + delta_x, delta_x)
+                ylist = np.arange(sp[1], ep[1] + delta_y, delta_y)
             points = tuple(zip(xlist, ylist))
             # print('LineEntity: scatter: line points={}'.format(
             #     (self.start, self.end, self.length)))
         elif self.linetype == 'ARC':
-            delta_angle = (self.angles[1] - self.angles[0]) / np.abs(
-                self.angles[1] -
-                self.angles[0]) / self.radius / 2  # 按照弧长1m为基准转换
-            angle_list = np.arange(self.angles[0], self.angles[1], delta_angle)
+            if self.angles[1] > self.angles[0]:
+                delta_angle = 1 / self.radius / 2  # 按照弧长0.5m为基准转换
+            else:
+                delta_angle = -1 / self.radius / 2
+            angle_list = np.arange(self.angles[0],
+                                   self.angles[1] + delta_angle, delta_angle)
             # points = np.array([np.cos(angle_list),
             #           np.sin(angle_list)
             #           ]) * self.dxf_entity.radius + self.dxf_entity.center
@@ -174,6 +178,7 @@ class LineEntity:
     def changeEPTurn(self):
         if self.linetype == 'ARC':
             self.angles[0], self.angles[1] = self.angles[1], self.angles[0]
+            self.start, self.end = self.end, self.start
             # if self.angles[1] < self.angles[0]:
             #     self.angles[1] = self.angles[1] + 2 * np.pi
             #     print('changeEPTurn: angle:{}'.format(self.angles))
