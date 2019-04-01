@@ -48,9 +48,8 @@ def getConnectMap(entities_dict, threshold):
     return connect_map_dict
 
 
-def saveRefLineToFile(out_ref_line_map_file, ref_line_dict):
-    # 因为已经处理过的数据不在传入fig中,因此ref_line仅有增量
-    fp = open(out_ref_line_map_file, 'a+')
+def saveRefLineToFile(out_ref_line_map_file, ref_line_dict, wt):
+    fp = open(out_ref_line_map_file, wt)
     for _, key in enumerate(ref_line_dict):
         ref_line = ref_line_dict[key]
         for data in ref_line:
@@ -167,12 +166,16 @@ if __name__ == "__main__":
             entity_in_map.initFromDXF(entity, scale, bias)  #
             # 先简单考虑:对于同一个dxf文件,entities的顺序是确定的,因此可以直接通过num(也就是ID)来比对
             if num in saved_num_list:
-                line = entity_in_map.draw(color='k', picker=0, url=num)
+                line = saved_line_entities_dict[num].draw(
+                    color='k', picker=0, url=num)
+                total_line_entities_dict[num] = saved_line_entities_dict[num]
+                # print('saved num is {}'.format(num))
                 # procing_line_entities_dict[
                 #     num] = entity_in_map  # 传递的是line_entity,为了统计全部的entities,先把数据传进去
             else:
                 line = entity_in_map.draw(color='b', picker=5, url=num)
-            total_line_entities_dict[num] = entity_in_map
+                total_line_entities_dict[num] = entity_in_map
+                print('no saved num is {}'.format(num))
             ax.add_line(line)
 
         if entity.layer == 'board':
@@ -197,10 +200,10 @@ if __name__ == "__main__":
     zhenjiang_map.callBackDisconnect()
 
     # 保存line_entities_dict.json
-    saved_line_entities_dict.update(zhenjiang_map.done_line_entity_dict)
-    if len(saved_line_entities_dict) > 0:
+
+    if len(zhenjiang_map.done_line_entity_dict) > 0:
         jft.saveLineMapToJson(inout_entities_map_file, 'w+',
-                              saved_line_entities_dict)
+                              zhenjiang_map.done_line_entity_dict)
     else:
         print('no line_entity selected.')
 
@@ -212,15 +215,16 @@ if __name__ == "__main__":
             out_ref_line_map_file = file_dir + '_ref_line_map.json'
         else:
             out_ref_line_map_file = file_dir + out_ref_line_map_file
-        saveRefLineToFile(out_ref_line_map_file, zhenjiang_map.ref_line_dict)
+        saveRefLineToFile(out_ref_line_map_file, zhenjiang_map.ref_line_dict,
+                          'w+')
 
     # 确认全部entity都已经连接
-    # if len(saved_line_entities_dict) == num:
-    #     out_connect_map_file = input(
-    #         '请输入有向连通地图文件名称,回车默认为:{}_connect_map.json'.format(file_dir))
-    #     if len(out_connect_map_file) == 0:
-    #         out_connect_map_file = file_dir + '_connect_map.json'
-    #     else:
-    #         out_connect_map_file = file_dir + out_connect_map_file
-    #     connect_map_dict = getConnectMap(saved_line_entities_dict, 1.5 * scale)
-    #     saveConnectMapTofile(out_connect_map_file, connect_map_dict)
+    if len(zhenjiang_map.done_line_entity_dict) == num:
+        out_connect_map_file = input(
+            '请输入有向连通地图文件名称,回车默认为:{}_connect_map.json'.format(file_dir))
+        if len(out_connect_map_file) == 0:
+            out_connect_map_file = file_dir + '_connect_map.json'
+        else:
+            out_connect_map_file = file_dir + out_connect_map_file
+        connect_map_dict = getConnectMap(saved_line_entities_dict, 2 * scale)
+        saveConnectMapTofile(out_connect_map_file, connect_map_dict)
