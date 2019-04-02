@@ -91,9 +91,9 @@ def saveConnectMapTofile(out_connect_map_file, connect_map_dict):
 
 
 if __name__ == "__main__":
-    file_dir = input('请输入数据文件所在地址与名称,如:../data/map/shenzhen/shenzhen:')
+    file_dir = input('请输入数据文件所在地址与名称,如:./data/shenzhen/shenzhen:')
     if len(file_dir) == 0:
-        file_dir = '../data/map/shenzhen/shenzhen'
+        file_dir = './data/shenzhen/shenzhen'
 
     in_img_file = input('请输入图像文件名称,回车默认为:{}.bmp. [n]表示不需读入:'.format(file_dir))
     if len(in_img_file) == 0:
