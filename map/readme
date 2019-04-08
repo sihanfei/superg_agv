@@ -1,3 +1,10 @@
+环境依赖:
+python 3.5 及以上
+numpy 1.16.2
+matplotlib 3.0.3
+scipy 1.2.1
+dxfgrabber 1, 0, 0
+
 1.map_build.py为执行的地图半自动生成工具
 2.在执行map_build.py时,需要提前准备好道路的dxf文件
 3.为了直观显示,./data/xx目录下可以存放一张地图的照片

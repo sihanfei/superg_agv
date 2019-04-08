@@ -13,6 +13,22 @@ import threading
 
 import time
 
+
+def get_host_ip():
+    """
+    利用UDP封包提取ip
+    查询本机ip地址
+    :return: ip
+    """
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        ip = s.getsockname()[0]
+    finally:
+        s.close()
+    return ip
+
+
 BUF_SIZE = 1024
 DiGraphic = []
 
@@ -206,12 +222,13 @@ class routeMap:
 
 
 if __name__ == "__main__":
-    connect_map_file = "../data/map/connect_map.json"
+    file_dir = "./map/zhenjiang"
+    connect_map_file = file_dir + "/connect_map.json"
     connect_map_dict = getConnectMapFromJson(connect_map_file)
     for _, key in enumerate(connect_map_dict):
         print('main:{}:{}'.format(key, connect_map_dict[key]))
 
-    ref_line_map_file = "../data/map/ref_line_map.json"
+    ref_line_map_file = file_dir + "/ref_line_map.json"
     ref_line_length_map_dict = getRefLineLengthMapFromJson(ref_line_map_file)
     for _, key in enumerate(ref_line_length_map_dict):
         print('main:ref_line->{}:{}'.format(key,
@@ -237,7 +254,8 @@ if __name__ == "__main__":
     # ax.imshow(npimg1, origin='lower')
     # ax.autoscale(False)
 
-    HOST = "192.168.10.10"
+    HOST = get_host_ip()
+    print(HOST)
     PORT = 9001
     ADDR = (HOST, PORT)
     server = ThreadingTCPServer(ADDR, Handler)  #参数为监听地址和已建立连接的处理类
