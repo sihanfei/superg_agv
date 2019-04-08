@@ -126,17 +126,21 @@ if __name__ == "__main__":
         img1 = PIImg.open(in_img_file)
         npimg1 = np.array(img1)
         npimg1 = npimg1[-1:0:-1, :, :]
-        scale = 1.08
-        bias = [0, 0]
+        scale = float(input('input the scale: '))
+        bias_str = input('input the bias by ",": ')
+        bias_list = bias_str.split(',')
+        bias = [float(bias_list[0]), float(bias_list[1])]
         ax.imshow(npimg1, origin='lower')
-        ax.autoscale(False)
+        # ax.autoscale(False)
+        ax.autoscale(True)
+        ax.set_xlim(-100, 1000)
+        ax.set_ylim(-100, 1000)
     else:
         scale = 1
         bias = [0, 0]
-        ax.set_xlim = (0, 1000)
-        ax.set_ylim = (0, 1000)
         print('no img')
-
+        ax.set_xlim = [-100, 1000]
+        ax.set_ylim = [-100, 1000]
     # 读取json文件,保存的数据为line_entity,用于判断是否entity已经存在过,
     line_entities_json_file = inout_entities_map_file
     entities_map_obj = jft.readLineMapFromJson(line_entities_json_file)
@@ -215,8 +219,24 @@ if __name__ == "__main__":
             out_ref_line_map_file = file_dir + '_ref_line_map.json'
         else:
             out_ref_line_map_file = file_dir + out_ref_line_map_file
+        # 读取ref_line_map.json,查看id,如果id存在map.ref_line_dict中,那么删除该行
+        try:
+            pf = open(out_ref_line_map_file, 'r+')
+            lines = pf.readlines()
+            surv_lines = []
+            for line in lines:
+                ref_list = line.split(',')
+                id = int(ref_list[0])
+                if not zhenjiang_map.ref_line_dict.__contains__(id):
+                    surv_lines.append(line)
+            pf.writelines(surv_lines)
+        except FileNotFoundError as e:
+            print('file not exist!')
+        finally:
+            pf.close()
+
         saveRefLineToFile(out_ref_line_map_file, zhenjiang_map.ref_line_dict,
-                          'w+')
+                          'a+')
 
     # 确认全部entity都已经连接
     if len(zhenjiang_map.done_line_entity_dict) == num:

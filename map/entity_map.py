@@ -54,7 +54,8 @@ class EntityMapFig:
         self.current_line_index = 0
         #
         self.board_artist = []  # 生成参考线时使用
-        self.ref_line_dict = {}
+        self.ref_line_dict = {}  # 参考线字典 id : ref_line_list
+        self.combine_dict = {}  # 将entity和board关联数据保存下来
         #
         self.line_entity_id = 0  # 单选中心线
         self.entity = []
@@ -117,8 +118,8 @@ class EntityMapFig:
                         self.line_entity_id = int(artist.get_url())
                         self.entity = self.entity_dict[self.line_entity_id]
                         self.artist = artist
-                        print('entity_map:xydata:{}'.format(
-                            artist.get_xydata()))
+                        # print('entity_map:xydata:{}'.format(
+                        #     artist.get_xydata()))
                         self.artist.set_color('r')
                         self.ax.set_ylabel('line id = {}'.format(
                             self.line_entity_id))
@@ -265,6 +266,8 @@ class EntityMapFig:
                 self.ref_line_dict[self.line_entity_id] = self.getRefLine(
                     self.entity, 8 * self.entity.scale, board_tree)  # 计算车道参考线
                 #
+                self.combine_dict[
+                    self.entity] = board_tree  # 将entity和board关联数据保存下来
                 self.done_line_entity_dict[
                     self.line_entity_id] = self.entity  # 将entity移入done
                 self.entity_dict.pop(self.line_entity_id)  # 同时从entity_dict中移除
@@ -331,7 +334,7 @@ class EntityMapFig:
 
     def getRefLine(self, line_entity, radius_thes, tree):
         points = line_entity.scatterGPSPoints()
-        print('entity_map.py:points:{}'.format(points))
+        # print('entity_map.py:points:{}'.format(points))
         ref_line = []
         if line_entity.linetype == 'LINE':
             for i in range(1, len(points)):
