@@ -263,8 +263,16 @@ class EntityMapFig:
                 board_tree = spt.KDTree(board_data)
                 print('entity_map: onKeyPress: sp, ep ={}'.format(
                     (self.start_point, self.end_point)))
+
+                text = self.ax.get_xlabel()
+                self.ax.set_xlabel('calc ref_line', color='r')
+                self.fig.canvas.draw()
+
                 self.ref_line_dict[self.line_entity_id] = self.getRefLine(
                     self.entity, 8 * self.entity.scale, board_tree)  # 计算车道参考线
+
+                self.ax.set_xlabel(text, color='k')
+                self.fig.canvas.draw()
                 #
                 self.combine_dict[
                     self.entity] = board_tree  # 将entity和board关联数据保存下来
@@ -324,13 +332,14 @@ class EntityMapFig:
     def callBackConnect(self):
         self.fig.canvas.mpl_connect('pick_event', self.onPick)
         self.fig.canvas.mpl_connect('button_press_event', self.onButtonPress)
-        self.fig.canvas.mpl_connect('key_release_event', self.onKeyPress)
+        self.fig.canvas.mpl_connect('key_press_event', self.onKeyPress)
         self.fig.canvas.mpl_connect('scroll_event', self.OnMouseWheel)
 
     def callBackDisconnect(self):
         self.fig.canvas.mpl_disconnect(self.onPick)
         self.fig.canvas.mpl_disconnect(self.onButtonPress)
         self.fig.canvas.mpl_disconnect(self.onKeyPress)
+        self.fig.canvas.mpl_disconnect(self.OnMouseWheel)
 
     def getRefLine(self, line_entity, radius_thes, tree):
         points = line_entity.scatterGPSPoints()

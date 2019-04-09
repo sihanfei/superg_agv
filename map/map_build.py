@@ -26,6 +26,8 @@ from gps_point import GPSPoint
 from line_entity import LineEntity
 from entity_map import EntityMapFig
 
+import csv
+
 
 def getConnectMap(entities_dict, threshold):
     # currentEntityID : (nextID0, ..., nextIDn)
@@ -204,7 +206,6 @@ if __name__ == "__main__":
     zhenjiang_map.callBackDisconnect()
 
     # 保存line_entities_dict.json
-
     if len(zhenjiang_map.done_line_entity_dict) > 0:
         jft.saveLineMapToJson(inout_entities_map_file, 'w+',
                               zhenjiang_map.done_line_entity_dict)
@@ -219,24 +220,28 @@ if __name__ == "__main__":
             out_ref_line_map_file = file_dir + '_ref_line_map.json'
         else:
             out_ref_line_map_file = file_dir + out_ref_line_map_file
+
         # 读取ref_line_map.json,查看id,如果id存在map.ref_line_dict中,那么删除该行
         try:
             pf = open(out_ref_line_map_file, 'r+')
-            lines = pf.readlines()
+            lines = csv.reader(pf)
             surv_lines = []
             for line in lines:
-                ref_list = line.split(',')
-                id = int(ref_list[0])
-                if not zhenjiang_map.ref_line_dict.__contains__(id):
+                id = int(line[0])
+                if not zhenjiang_map.ref_line_dict.__contains__(
+                        id):  # 已经保存的id不在本次地图生成范围,则保留
+                    print(id)
                     surv_lines.append(line)
-            pf.writelines(surv_lines)
+            pf.truncate(0)
+            writer = csv.writer(pf)
+            writer.writerows(surv_lines)
         except FileNotFoundError as e:
             print('file not exist!')
         finally:
             pf.close()
 
         saveRefLineToFile(out_ref_line_map_file, zhenjiang_map.ref_line_dict,
-                          'a+')
+                          'a+')  # 保存新数据
 
     # 确认全部entity都已经连接
     if len(zhenjiang_map.done_line_entity_dict) == num:
